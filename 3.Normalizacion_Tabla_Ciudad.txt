@@ -1,0 +1,106 @@
+************************************************************************
+NORMALIZACION
+************************************************************************
+
+La normalización es el proceso de organizar los datos en una base de datos para reducir la redundancia y mejorar la integridad. Se hace dividiendo una tabla grande en otras más pequeñas y estableciendo relaciones entre ellas.
+
+
+************************************************************************
+NORMALIZACION - RELACION DE ESTRUCTURAS
+************************************************************************
+
+Durante el proceso de normalización (especialmente cuando se hace sobre una base ya existente), las estructuras de control como IF, WHILE, CASE, o LOOP se utilizan en procedimientos almacenados, triggers o scripts para:
+
+Identificar datos repetidos
+Filtrar registros duplicados
+Migrar datos a nuevas tablas normalizadas
+Verificar integridad antes de insertar datos en tablas nuevas
+
+************************************************************************
+Ejemplo práctico: Normalizar tabla de empleados con ciudades
+************************************************************************
+
+Objetivo: Separar una tabla no normalizada que contiene empleados con ciudad escrita manualmente (repetida) y crear una tabla independiente de ciudades.
+
+************************************************************************
+TABLA SIN NORMALIZAR
+************************************************************************
+
+CREATE TABLE empleados_no_normalizada (
+    id_empleado INT,
+    nombre_empleado VARCHAR(100),
+    ciudad VARCHAR(50) -- ¡Datos repetidos aquí!
+);
+
+
+************************************************************************
+TABLA NORMALIZADA
+************************************************************************
+
+CREATE TABLE ciudades (
+    id_ciudad INT AUTO_INCREMENT PRIMARY KEY,
+    nombre_ciudad VARCHAR(50) UNIQUE
+);
+
+CREATE TABLE empleados (
+    id_empleado INT,
+    nombre_empleado VARCHAR(100),
+    id_ciudad INT,
+    FOREIGN KEY (id_ciudad) REFERENCES ciudades(id_ciudad)
+);
+
+************************************************************************
+ESTRUCTURAS DE CONTROL - SCRIPT PARA POBLAR LA NUEVA TABLA
+************************************************************************
+
+
+DELIMITER //
+
+CREATE PROCEDURE normalizar_empleados()
+BEGIN
+    DECLARE done INT DEFAULT 0;
+    DECLARE nom_ciudad VARCHAR(50);
+    DECLARE emp_nombre VARCHAR(100);
+
+    DECLARE cur CURSOR FOR
+        SELECT nombre_empleado, ciudad FROM empleados_no_normalizada;
+    
+    DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = 1;
+
+    OPEN cur;
+
+    read_loop: LOOP
+        FETCH cur INTO emp_nombre, nom_ciudad;
+        IF done THEN
+            LEAVE read_loop;
+        END IF;
+
+        -- Insertar ciudad solo si no existe
+        IF NOT EXISTS (SELECT 1 FROM ciudades WHERE nombre_ciudad = nom_ciudad) THEN
+            INSERT INTO ciudades(nombre_ciudad) VALUES (nom_ciudad);
+        END IF;
+
+        -- Insertar empleado con ID de ciudad ya existente
+        INSERT INTO empleados(nombre_empleado, id_ciudad)
+        SELECT emp_nombre, id_ciudad FROM ciudades WHERE nombre_ciudad = nom_ciudad;
+
+    END LOOP;
+
+    CLOSE cur;
+END //
+
+DELIMITER ;
+
+
+************************************************************************
+DETALLE NORMALIZACION
+************************************************************************
+
+| Elemento              | Rol                                                 |
+| --------------------- | --------------------------------------------------- |
+| `IF`, `IF NOT EXISTS` | Controlan inserción de datos sin duplicados         |
+| `LOOP`, `CURSOR`      | Recorren los datos repetidos para transformarlos    |
+| `SELECT`, `INSERT`    | Reubican datos en tablas normalizadas               |
+| `FOREIGN KEY`         | Enlazan entidades entre sí (clave en normalización) |
+
+

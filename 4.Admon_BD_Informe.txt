@@ -1,0 +1,119 @@
+**************************************************************************************************************
+INFORME SEMANAL
+**************************************************************************************************************
+
+-------------------------------------------------------------
+ 1. Instalar herramientas necesarias (una vez)
+-------------------------------------------------------------
+
+sudo apt update
+sudo apt install mysql-client libreoffice-core libreoffice-writer -y
+
+-------------------------------------------------------------
+2. Script Bash: generar_informe_mysql.sh
+-------------------------------------------------------------
+
+#!/bin/bash
+
+# Variables
+fecha=$(date +%F)
+informe_dir="/home/usuario/informes"
+csv_file="$informe_dir/informe_mysql_$fecha.csv"
+pdf_file="$informe_dir/informe_mysql_$fecha.pdf"
+
+# Crear carpeta si no existe
+mkdir -p "$informe_dir"
+
+# Exportar datos a CSV
+{
+  echo "INFORME SEMANAL MYSQL - Fecha: $fecha"
+  echo ""
+  echo "TAMAÑO DE BASES DE DATOS (MB)"
+  mysql -u root -p'tu_contraseña' -e "SELECT table_schema AS 'Base de Datos', ROUND(SUM(data_length + index_length) / 1024 / 1024, 2) AS 'Tamaño (MB)' FROM information_schema.tables GROUP BY table_schema;" --batch --skip-column-names
+
+  echo ""
+  echo "NÚMERO DE TABLAS POR BASE DE DATOS"
+  mysql -u root -p'tu_contraseña' -e "SELECT table_schema AS 'Base de Datos', COUNT(*) AS 'Tablas' FROM information_schema.tables GROUP BY table_schema;" --batch --skip-column-names
+
+  echo ""
+  echo "USUARIOS ACTIVOS"
+  mysql -u root -p'tu_contraseña' -e "SELECT user, host FROM mysql.user;" --batch --skip-column-names
+
+  echo ""
+  echo "CONEXIONES ACTIVAS"
+  mysql -u root -p'tu_contraseña' -e "SHOW PROCESSLIST;" --batch --skip-column-names
+} > "$csv_file"
+
+# Convertir CSV a PDF con libreoffice
+libreoffice --headless --convert-to pdf "$csv_file" --outdir "$informe_dir"
+
+-------------------------------------------------------------
+ 3. Agregar al crontab para ejecución semanal
+-------------------------------------------------------------
+
+crontab -e
+
+Agrega esta línea para que corra todos los domingos a las 8 AM:
+
+0 8 * * 0 /home/usuario/scripts/generar_informe_mysql.sh
+
+-------------------------------------------------------------
+4.  Enviar por correo
+-------------------------------------------------------------
+
+sudo apt install mailutils -y
+
+-------------------------------------------------------------
+5. Actualizamos el script generar_informe_mysql.sh
+-------------------------------------------------------------
+
+#!/bin/bash
+
+# Variables
+fecha=$(date +%F)
+informe_dir="/home/usuario/informes"
+csv_file="$informe_dir/informe_mysql_$fecha.csv"
+pdf_file="$informe_dir/informe_mysql_$fecha.pdf"
+correo_destino="tucorreo@ejemplo.com"  # <--- REEMPLAZAR
+
+# Crear carpeta si no existe
+mkdir -p "$informe_dir"
+
+# Exportar datos a CSV
+{
+  echo "INFORME SEMANAL MYSQL - Fecha: $fecha"
+  echo ""
+  echo "TAMAÑO DE BASES DE DATOS (MB)"
+  mysql -u root -p'tu_contraseña' -e "SELECT table_schema AS 'Base de Datos', ROUND(SUM(data_length + index_length) / 1024 / 1024, 2) AS 'Tamaño (MB)' FROM information_schema.tables GROUP BY table_schema;" --batch --skip-column-names
+
+  echo ""
+  echo "NÚMERO DE TABLAS POR BASE DE DATOS"
+  mysql -u root -p'tu_contraseña' -e "SELECT table_schema AS 'Base de Datos', COUNT(*) AS 'Tablas' FROM information_schema.tables GROUP BY table_schema;" --batch --skip-column-names
+
+  echo ""
+  echo "USUARIOS ACTIVOS"
+  mysql -u root -p'tu_contraseña' -e "SELECT user, host FROM mysql.user;" --batch --skip-column-names
+
+  echo ""
+  echo "CONEXIONES ACTIVAS"
+  mysql -u root -p'tu_contraseña' -e "SHOW PROCESSLIST;" --batch --skip-column-names
+} > "$csv_file"
+
+# Convertir CSV a PDF
+libreoffice --headless --convert-to pdf "$csv_file" --outdir "$informe_dir"
+
+# Enviar por correo
+echo "Adjunto el informe semanal de MySQL generado el $fecha" | mail -s "Informe Semanal MySQL $fecha" -A "$pdf_file" "$correo_destino"
+
+
+-------------------------------------------------------------
+6. Conclusiones
+-------------------------------------------------------------
+
+| Elemento            | Detalle                                                         |
+| ------------------- | --------------------------------------------------------------- |
+| 📂 Ruta de informes | `/home/usuario/informes`                                        |
+| 📬 Destinatario     | Modifica `correo_destino` en el script                          |
+| 🔐 Seguridad        | Para evitar clave en texto plano, puedes configurar `~/.my.cnf` |
+| 🕒 Frecuencia       | Controlada por `crontab` (ejemplo: domingo a las 8 AM)          |
+

@@ -1,0 +1,82 @@
+************************************************************************
+Ejemplo: Base de Datos para Gestión de Inventario y Ventas
+************************************************************************
+
+Objetivo: Modelar una base de datos que permita registrar productos, categorías, clientes y ventas, usando tipos de datos adecuados y buenas prácticas de diseño.
+
+***********************************************************
+DISEÑO BD GESTION DE VENTAS
+***********************************************************
+
+-- Tabla de categorías de productos
+CREATE TABLE categorias (
+    id_categoria INT AUTO_INCREMENT PRIMARY KEY,        -- Clave primaria
+    nombre_categoria VARCHAR(50) NOT NULL               -- Nombre de la categoría (ej: Laptops, Smartphones)
+);
+
+-- Tabla de productos tecnológicos
+CREATE TABLE productos (
+    id_producto INT AUTO_INCREMENT PRIMARY KEY,         -- Clave primaria
+    nombre_producto VARCHAR(100) NOT NULL,              -- Nombre del producto
+    descripcion TEXT,                                   -- Descripción detallada
+    precio_unitario DECIMAL(10,2) NOT NULL,             -- Precio con 2 decimales
+    stock INT DEFAULT 0,                                -- Cantidad disponible
+    id_categoria INT,                                   -- Relación con categoría
+
+    FOREIGN KEY (id_categoria) REFERENCES categorias(id_categoria)
+);
+
+-- Tabla de clientes
+CREATE TABLE clientes (
+    id_cliente INT AUTO_INCREMENT PRIMARY KEY,          -- Clave primaria
+    nombre_cliente VARCHAR(80) NOT NULL,                -- Nombre del cliente
+    correo VARCHAR(100),                                -- Correo electrónico
+    direccion TEXT,                                     -- Dirección de entrega
+    telefono VARCHAR(15)                                -- Teléfono de contacto
+);
+
+-- Tabla de ventas realizadas
+CREATE TABLE ventas (
+    id_venta INT AUTO_INCREMENT PRIMARY KEY,            -- Clave primaria
+    id_cliente INT NOT NULL,                            -- Cliente que realizó la compra
+    fecha_venta DATETIME DEFAULT CURRENT_TIMESTAMP,     -- Fecha y hora de la venta
+    total DECIMAL(10,2),                                -- Monto total de la venta
+
+    FOREIGN KEY (id_cliente) REFERENCES clientes(id_cliente)
+);
+
+-- Detalle de cada producto en la venta
+CREATE TABLE detalle_venta (
+    id_detalle INT AUTO_INCREMENT PRIMARY KEY,          -- Clave primaria
+    id_venta INT NOT NULL,                              -- Relación con la venta
+    id_producto INT NOT NULL,                           -- Relación con el producto vendido
+    cantidad INT NOT NULL,                              -- Cantidad vendida
+    precio_unitario DECIMAL(10,2) NOT NULL,             -- Precio en el momento de la venta
+
+    FOREIGN KEY (id_venta) REFERENCES ventas(id_venta),
+    FOREIGN KEY (id_producto) REFERENCES productos(id_producto)
+);
+
+
+***********************************************************
+TIPOS DE DATOS BD GESTION DE VENTAS
+***********************************************************
+
+
+| Campo           | Tipo de Dato               | Justificación                      |
+| --------------- | -------------------------- | ---------------------------------- |
+| `INT`           | IDs, cantidad, stock       | Valores enteros, autoincrementales |
+| `VARCHAR(n)`    | Nombres, teléfonos         | Texto corto, longitud variable     |
+| `TEXT`          | Descripciones, direcciones | Texto largo                        |
+| `DECIMAL(10,2)` | Precios, totales           | Precisión para valores monetarios  |
+| `DATETIME`      | Fecha y hora de venta      | Registro exacto para trazabilidad  |
+
+***********************************************************
+JUSTIFICACION BD GESTION DE VENTAS
+***********************************************************
+
+Uso de DECIMAL para montos monetarios.
+Tablas separadas para detalles de ventas (normalización).
+Relaciones entre entidades mediante FOREIGN KEY.
+Restricciones NOT NULL, DEFAULT.
+

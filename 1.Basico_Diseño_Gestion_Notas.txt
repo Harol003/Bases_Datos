@@ -1,0 +1,127 @@
+*******************************************************
+Tema: Modelamiento y Diseño de Base de Datos en MySQL
+*******************************************************
+
+Objetivo:Modelar una base de datos para almacenar estudiantes, asignaturas, docentes y calificaciones, permitiendo registrar y consultar las notas de cada estudiante por asignatura y periodo.
+
+*******************************************************
+BD GESTION DE NOTAS
+*******************************************************
+
+-- Crear la base de datos
+CREATE DATABASE GestionNotas;
+
+-- Seleccionar la base de datos
+USE GestionNotas;
+
+-- Tabla de estudiantes
+CREATE TABLE Estudiantes (
+    id_estudiante INT AUTO_INCREMENT PRIMARY KEY,
+    nombre VARCHAR(100) NOT NULL,
+    documento VARCHAR(20),
+    grado VARCHAR(10)
+);
+
+-- Tabla de docentes
+CREATE TABLE Docentes (
+    id_docente INT AUTO_INCREMENT PRIMARY KEY,
+    nombre VARCHAR(100) NOT NULL,
+    especialidad VARCHAR(50)
+);
+
+-- Tabla de asignaturas
+CREATE TABLE Asignaturas (
+    id_asignatura INT AUTO_INCREMENT PRIMARY KEY,
+    nombre VARCHAR(100) NOT NULL,
+    id_docente INT,
+    FOREIGN KEY (id_docente) REFERENCES Docentes(id_docente)
+);
+
+-- Tabla de periodos académicos
+CREATE TABLE Periodos (
+    id_periodo INT AUTO_INCREMENT PRIMARY KEY,
+    nombre VARCHAR(20) NOT NULL -- Ej: "Periodo 1", "Periodo 2"
+);
+
+-- Tabla de calificaciones
+CREATE TABLE Calificaciones (
+    id_calificacion INT AUTO_INCREMENT PRIMARY KEY,
+    id_estudiante INT,
+    id_asignatura INT,
+    id_periodo INT,
+    nota DECIMAL(3,1),  -- Nota de 0.0 a 10.0
+    FOREIGN KEY (id_estudiante) REFERENCES Estudiantes(id_estudiante),
+    FOREIGN KEY (id_asignatura) REFERENCES Asignaturas(id_asignatura),
+    FOREIGN KEY (id_periodo) REFERENCES Periodos(id_periodo)
+);
+
+*******************************************************
+INSERTAR BD GESTION DE NOTAS
+*******************************************************
+
+-- Insertar estudiantes
+INSERT INTO Estudiantes (nombre, documento, grado)
+VALUES ('Carlos Martínez', '123456789', '10A'),
+       ('Luisa Gómez', '987654321', '10A');
+
+-- Insertar docentes
+INSERT INTO Docentes (nombre, especialidad)
+VALUES ('Diana Ríos', 'Matemáticas'),
+       ('Jorge Pérez', 'Informática');
+
+-- Insertar asignaturas
+INSERT INTO Asignaturas (nombre, id_docente)
+VALUES ('Álgebra', 1),
+       ('Programación', 2);
+
+-- Insertar periodos
+INSERT INTO Periodos (nombre)
+VALUES ('Periodo 1'), ('Periodo 2');
+
+-- Insertar calificaciones
+INSERT INTO Calificaciones (id_estudiante, id_asignatura, id_periodo, nota)
+VALUES (1, 1, 1, 8.5), -- Carlos en Álgebra, Periodo 1
+       (1, 2, 1, 9.2), -- Carlos en Programación, Periodo 1
+       (2, 1, 1, 7.8), -- Luisa en Álgebra, Periodo 1
+       (2, 2, 1, 8.0); -- Luisa en Programación, Periodo 1
+
+*******************************************************
+CONSULTAS BD GESTION DE NOTAS
+*******************************************************
+
+-- Consulta 1: Ver todas las notas de un estudiante
+SELECT E.nombre AS Estudiante, A.nombre AS Asignatura, P.nombre AS Periodo, C.nota
+FROM Calificaciones C
+JOIN Estudiantes E ON C.id_estudiante = E.id_estudiante
+JOIN Asignaturas A ON C.id_asignatura = A.id_asignatura
+JOIN Periodos P ON C.id_periodo = P.id_periodo
+WHERE E.nombre = 'Carlos Martínez';
+
+--  Consulta 2: Promedio de notas por asignatura
+SELECT A.nombre AS Asignatura, AVG(C.nota) AS Promedio
+FROM Calificaciones C
+JOIN Asignaturas A ON C.id_asignatura = A.id_asignatura
+GROUP BY A.nombre;
+
+-- Consulta 3: Estudiantes con nota menor a 6.0
+SELECT E.nombre AS Estudiante, A.nombre AS Asignatura, C.nota
+FROM Calificaciones C
+JOIN Estudiantes E ON C.id_estudiante = E.id_estudiante
+JOIN Asignaturas A ON C.id_asignatura = A.id_asignatura
+WHERE C.nota < 6.0;
+
+*******************************************************
+CARACTERISTICAS BD GESTION DE NOTAS
+*******************************************************
+
+Relaciones claras:
+
+Estudiante ↔ Calificación
+Asignatura ↔ Docente
+Calificación ↔ Periodo
+
+Buena normalización, sin datos repetidos.
+Facilita la generación de reportes y estadísticas.
+
+
+

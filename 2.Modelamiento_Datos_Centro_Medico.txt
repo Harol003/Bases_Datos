@@ -1,0 +1,77 @@
+************************************************************************
+Ejemplo: Base de Datos para Gestión de Pacientes en un Centro Médico
+************************************************************************
+
+Objetivo: Modelar una base de datos que permita registrar pacientes, médicos, citas médicas y especialidades, usando correctamente los tipos de datos.
+
+
+***********************************************************
+DISEÑO BD CENTRO MEDICO
+***********************************************************
+
+-- Tabla de especialidades médicas
+CREATE TABLE especialidades (
+    id_especialidad INT AUTO_INCREMENT PRIMARY KEY,    -- Clave primaria
+    nombre_especialidad VARCHAR(100) NOT NULL          -- Nombre de la especialidad médica
+);
+
+-- Tabla de médicos
+CREATE TABLE medicos (
+    id_medico INT AUTO_INCREMENT PRIMARY KEY,          -- Clave primaria
+    nombre_completo VARCHAR(100) NOT NULL,             -- Nombre completo del médico
+    numero_documento CHAR(10) UNIQUE NOT NULL,         -- Documento de identidad (longitud fija)
+    correo VARCHAR(100),                               -- Correo electrónico
+    telefono VARCHAR(15),                              -- Número de teléfono
+    id_especialidad INT,                               -- Relación con especialidad
+
+    FOREIGN KEY (id_especialidad) REFERENCES especialidades(id_especialidad)
+);
+
+-- Tabla de pacientes
+CREATE TABLE pacientes (
+    id_paciente INT AUTO_INCREMENT PRIMARY KEY,         -- Clave primaria
+    nombre_completo VARCHAR(100) NOT NULL,              -- Nombre del paciente
+    fecha_nacimiento DATE NOT NULL,                     -- Fecha de nacimiento
+    sexo ENUM('M','F','Otro'),                          -- Sexo biológico o identidad
+    direccion TEXT,                                     -- Dirección completa
+    telefono VARCHAR(15)                                -- Teléfono de contacto
+);
+
+-- Tabla de citas médicas
+CREATE TABLE citas (
+    id_cita INT AUTO_INCREMENT PRIMARY KEY,             -- Clave primaria
+    id_paciente INT NOT NULL,                           -- Relación con paciente
+    id_medico INT NOT NULL,                             -- Relación con médico
+    fecha_cita DATETIME NOT NULL,                       -- Fecha y hora de la cita
+    motivo TEXT,                                        -- Descripción del motivo de la consulta
+    atendido BOOLEAN DEFAULT FALSE,                     -- Indica si ya fue atendido
+
+    FOREIGN KEY (id_paciente) REFERENCES pacientes(id_paciente),
+    FOREIGN KEY (id_medico) REFERENCES medicos(id_medico)
+);
+
+***********************************************************
+TIPOS DE DATOS BD CENTRO MEDICO
+***********************************************************
+
+| Campo        | Tipo de Dato                       | Justificación                         |
+| ------------ | ---------------------------------- | ------------------------------------- |
+| `INT`        | IDs de claves primarias y foráneas | Numérico, autoincremental y eficiente |
+| `VARCHAR(n)` | Nombres, correos, teléfonos        | Texto de longitud variable            |
+| `CHAR(n)`    | Documento de identidad             | Texto de longitud fija                |
+| `TEXT`       | Dirección o motivo de consulta     | Texto largo                           |
+| `DATE`       | Fecha de nacimiento                | Solo se necesita la fecha             |
+| `DATETIME`   | Fecha y hora de la cita            | Necesaria para programar consultas    |
+| `BOOLEAN`    | Estado de atención                 | Para marcar si fue o no atendido      |
+| `ENUM`       | Sexo ('M','F','Otro')              | Controla valores válidos posibles     |
+
+***********************************************************
+DETALLE BD CENTRO MEDICO
+***********************************************************
+
+Tipos adecuados para cada atributo.
+Uso de ENUM para restringir valores válidos.
+Relaciones entre tablas bien definidas con FOREIGN KEY.
+Campos con restricciones como NOT NULL, DEFAULT, UNIQUE.
+
+

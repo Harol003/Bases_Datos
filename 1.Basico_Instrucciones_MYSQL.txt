@@ -1,0 +1,95 @@
+*******************************************************
+LISTADO DE INSTRUCCIONES MYSQL
+*******************************************************
+
+CREATE DATABASE nombre_basedatos;
+-- Crea una nueva base de datos.
+-- Usar nombres descriptivos y en minúscula (recomendación).
+
+
+USE nombre_basedatos;
+-- Selecciona la base de datos con la que se va a trabajar.
+
+
+INSERT INTO nombre_tabla (columna1, columna2)
+VALUES ('valor1', 123);
+-- Inserta un nuevo registro en la tabla.
+
+
+
+SELECT * FROM nombre_tabla;
+-- Consulta todos los registros.
+
+
+
+SELECT nombre, edad FROM nombre_tabla WHERE edad > 18;
+-- Consulta registros con una condición específica.
+
+
+
+UPDATE nombre_tabla
+SET edad = 20
+WHERE nombre = 'Carlos';
+-- Modifica los datos existentes bajo una condición.
+
+
+
+
+DELETE FROM nombre_tabla
+WHERE id = 3;
+-- Elimina un registro según condición.
+-- ⚠️ Precaución: sin WHERE borra toda la tabla.
+
+
+
+DROP TABLE nombre_tabla;
+-- Elimina completamente una tabla (estructura + datos).
+
+
+
+ALTER TABLE nombre_tabla
+ADD direccion VARCHAR(200);
+-- Agrega una columna nueva a la tabla.
+
+
+
+ALTER TABLE nombre_tabla
+MODIFY edad TINYINT;
+-- Cambia el tipo de dato o tamaño de una columna.
+
+
+
+ALTER TABLE nombre_tabla
+DROP COLUMN direccion;
+-- Elimina una columna específica.
+
+
+
+ALTER TABLE calificaciones
+ADD CONSTRAINT fk_estudiante
+FOREIGN KEY (id_estudiante) REFERENCES estudiantes(id_estudiante);
+-- Crea una relación entre dos tablas.
+-- Sirve para mantener la integridad referencial.
+
+
+
+CREATE TABLE ejemplo_tipos_datos (
+    id INT AUTO_INCREMENT PRIMARY KEY,           -- Número entero autoincremental para identificar registros
+
+    nombre_usuario VARCHAR(50),                  -- Cadena de texto de longitud variable hasta 50 caracteres
+    codigo CHAR(3),                              -- Cadena de texto de longitud fija (ideal para códigos como 'A01')
+    
+    edad TINYINT,                                -- Entero pequeño (de -128 a 127 o 0 a 255 sin signo)
+    salario DECIMAL(8,2),                        -- Número decimal con 8 dígitos en total, 2 decimales (ej: 123456.78)
+    altura FLOAT,                                -- Número con decimales, menos preciso que DECIMAL, pero ocupa menos espacio
+    rendimiento DOUBLE,                          -- Número de doble precisión, más exacto que FLOAT
+
+    descripcion TEXT,                            -- Texto largo (hasta 65,535 caracteres), útil para comentarios o descripciones
+    activo BOOLEAN,                              -- Valor verdadero/falso (en MySQL es internamente TINYINT(1))
+    
+    fecha_nacimiento DATE,                       -- Fecha en formato AAAA-MM-DD
+    fecha_registro DATETIME                      -- Fecha y hora: AAAA-MM-DD HH:MM:SS
+);
+
+
+

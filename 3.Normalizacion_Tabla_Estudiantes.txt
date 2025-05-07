@@ -1,0 +1,107 @@
+**************************************************************************************************************
+Ejemplo práctico: Base de datos de estudiantes con carrera y facultad sin normalizar
+**************************************************************************************************************
+
+CREATE TABLE estudiantes_no_normalizada (
+    id_estudiante INT,
+    nombre_estudiante VARCHAR(100),
+    nombre_carrera VARCHAR(100),
+    nombre_facultad VARCHAR(100)
+);
+
+
+Problema:La facultad depende de la carrera, y la carrera del estudiante. Esto genera una dependencia transitiva, lo que viola la Tercera Forma Normal (3FN).
+
+**************************************************************************************************************
+Ejemplo práctico: Base de datos de estudiantes con carrera y facultad PASO 1 CREAR TABLAS NORMALIZADAS
+**************************************************************************************************************
+
+CREATE TABLE facultades (
+    id_facultad INT AUTO_INCREMENT PRIMARY KEY,
+    nombre_facultad VARCHAR(100) UNIQUE
+);
+
+CREATE TABLE carreras (
+    id_carrera INT AUTO_INCREMENT PRIMARY KEY,
+    nombre_carrera VARCHAR(100),
+    id_facultad INT,
+    FOREIGN KEY (id_facultad) REFERENCES facultades(id_facultad),
+    UNIQUE(nombre_carrera, id_facultad)
+);
+
+CREATE TABLE estudiantes (
+    id_estudiante INT,
+    nombre_estudiante VARCHAR(100),
+    id_carrera INT,
+    FOREIGN KEY (id_carrera) REFERENCES carreras(id_carrera)
+);
+
+**************************************************************************************************************
+Ejemplo práctico: Procedimiento SQL con estructuras de control PASO 2
+**************************************************************************************************************
+
+DELIMITER //
+
+CREATE PROCEDURE normalizar_estudiantes()
+BEGIN
+    DECLARE fin INT DEFAULT 0;
+    DECLARE est_nombre VARCHAR(100);
+    DECLARE nom_carrera VARCHAR(100);
+    DECLARE nom_facultad VARCHAR(100);
+
+    DECLARE cur CURSOR FOR
+        SELECT nombre_estudiante, nombre_carrera, nombre_facultad FROM estudiantes_no_normalizada;
+
+    DECLARE CONTINUE HANDLER FOR NOT FOUND SET fin = 1;
+
+    OPEN cur;
+
+    loop_datos: LOOP
+        FETCH cur INTO est_nombre, nom_carrera, nom_facultad;
+        IF fin THEN
+            LEAVE loop_datos;
+        END IF;
+
+        -- Insertar facultad si no existe
+        IF NOT EXISTS (
+            SELECT 1 FROM facultades WHERE nombre_facultad = nom_facultad
+        ) THEN
+            INSERT INTO facultades(nombre_facultad) VALUES (nom_facultad);
+        END IF;
+
+        -- Insertar carrera si no existe
+        IF NOT EXISTS (
+            SELECT 1 FROM carreras c
+            JOIN facultades f ON c.id_facultad = f.id_facultad
+            WHERE c.nombre_carrera = nom_carrera AND f.nombre_facultad = nom_facultad
+        ) THEN
+            INSERT INTO carreras(nombre_carrera, id_facultad)
+            SELECT nom_carrera, id_facultad FROM facultades WHERE nombre_facultad = nom_facultad;
+        END IF;
+
+        -- Insertar estudiante
+        INSERT INTO estudiantes(nombre_estudiante, id_carrera)
+        SELECT est_nombre, id_carrera
+        FROM carreras c
+        JOIN facultades f ON c.id_facultad = f.id_facultad
+        WHERE c.nombre_carrera = nom_carrera AND f.nombre_facultad = nom_facultad;
+    END LOOP;
+
+    CLOSE cur;
+END //
+
+DELIMITER ;
+
+
+**************************************************************************************************************
+Ejemplo práctico: FINALIZACION 
+**************************************************************************************************************
+
+| Elemento SQL    | Rol en la normalización                           |
+| --------------- | ------------------------------------------------- |
+| `IF NOT EXISTS` | Evita duplicados al migrar datos                  |
+| `CURSOR + LOOP` | Recorre la tabla no normalizada                   |
+| `FOREIGN KEY`   | Enlaza entidades: estudiante → carrera → facultad |
+| `JOIN`          | Relaciona tablas para insertar con seguridad      |
+| `UNIQUE`        | Garantiza unicidad por entidad lógica             |
+

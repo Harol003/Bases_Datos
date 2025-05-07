@@ -1,0 +1,108 @@
+************************************************************************
+Ejemplo práctico: Base de datos de ventas sin normalizar
+************************************************************************
+
+CREATE TABLE ventas_no_normalizada (
+    id_venta INT,
+    fecha DATE,
+    nombre_cliente VARCHAR(100),
+    correo_cliente VARCHAR(100),
+    producto VARCHAR(100),
+    cantidad INT,
+    precio_unitario DECIMAL(10,2)
+);
+
+
+Problema: La información del cliente se repite en cada venta. Esto viola la Segunda Forma Normal, ya que hay dependencias parciales del cliente con respecto al identificador de venta.
+
+************************************************************************
+Ejemplo práctico: Base de datos de ventas sin normalizar PASO 1
+************************************************************************
+
+- CREAR TABLAS NORMALIZADAS
+
+CREATE TABLE clientes (
+    id_cliente INT AUTO_INCREMENT PRIMARY KEY,
+    nombre_cliente VARCHAR(100),
+    correo_cliente VARCHAR(100),
+    UNIQUE(nombre_cliente, correo_cliente) -- Evita duplicados
+);
+
+CREATE TABLE ventas (
+    id_venta INT,
+    fecha DATE,
+    id_cliente INT,
+    producto VARCHAR(100),
+    cantidad INT,
+    precio_unitario DECIMAL(10,2),
+    FOREIGN KEY (id_cliente) REFERENCES clientes(id_cliente)
+);
+
+
+************************************************************************
+Ejemplo práctico: Base de datos de ventas sin normalizar PASO 2
+************************************************************************
+
+- Script con estructuras de control para migrar los datos
+
+DELIMITER //
+
+CREATE PROCEDURE normalizar_ventas()
+BEGIN
+    DECLARE fin INT DEFAULT 0;
+    DECLARE nom_cliente VARCHAR(100);
+    DECLARE correo_cliente VARCHAR(100);
+    DECLARE fecha_venta DATE;
+    DECLARE producto VARCHAR(100);
+    DECLARE cantidad INT;
+    DECLARE precio DECIMAL(10,2);
+    
+    DECLARE cur CURSOR FOR
+        SELECT fecha, nombre_cliente, correo_cliente, producto, cantidad, precio_unitario
+        FROM ventas_no_normalizada;
+    
+    DECLARE CONTINUE HANDLER FOR NOT FOUND SET fin = 1;
+
+    OPEN cur;
+
+    ciclo: LOOP
+        FETCH cur INTO fecha_venta, nom_cliente, correo_cliente, producto, cantidad, precio;
+        IF fin THEN
+            LEAVE ciclo;
+        END IF;
+
+        -- Insertar cliente si no existe
+        IF NOT EXISTS (
+            SELECT 1 FROM clientes
+            WHERE nombre_cliente = nom_cliente AND correo_cliente = correo_cliente
+        ) THEN
+            INSERT INTO clientes(nombre_cliente, correo_cliente)
+            VALUES (nom_cliente, correo_cliente);
+        END IF;
+
+        -- Insertar venta con relación al cliente
+        INSERT INTO ventas (id_venta, fecha, id_cliente, producto, cantidad, precio_unitario)
+        SELECT NULL, fecha_venta, id_cliente, producto, cantidad, precio
+        FROM clientes
+        WHERE nombre_cliente = nom_cliente AND correo_cliente = correo_cliente;
+    END LOOP;
+
+    CLOSE cur;
+END //
+
+DELIMITER ;
+
+
+************************************************************************
+Ejemplo práctico: Base de datos de ventas sin normalizar PASO 3
+************************************************************************
+
+
+| Control SQL     | Función aplicada                   |
+| --------------- | ---------------------------------- |
+| `IF NOT EXISTS` | Evita clientes duplicados          |
+| `LOOP + CURSOR` | Recorre registros para migrarlos   |
+| `FOREIGN KEY`   | Relaciona ventas con cliente       |
+| `UNIQUE`        | Mantiene la integridad en clientes |
+
+

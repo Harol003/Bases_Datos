@@ -1,0 +1,107 @@
+*******************************************************
+Tema: Modelamiento y Diseño de Base de Datos en MySQL
+*******************************************************
+
+Objetivo: Identificar las características básicas de una base de datos relacional, aplicar el modelo entidad-relación a una estructura real (tienda), y ejecutar comandos SQL básicos para crear y poblar la base.
+
+*******************************************************
+BD DE TIENDA DE TECNOLOGIA - IMPLEMENTACION
+*******************************************************
+
+-- Crear la base de datos
+CREATE DATABASE TiendaTecnologia;
+
+-- Seleccionar la base de datos para trabajar
+USE TiendaTecnologia;
+
+-- Crear tabla de clientes
+CREATE TABLE Clientes (
+    id_cliente INT AUTO_INCREMENT PRIMARY KEY,   -- Llave primaria
+    nombre VARCHAR(100) NOT NULL,
+    correo VARCHAR(100),
+    telefono VARCHAR(20)
+);
+
+-- Crear tabla de productos
+CREATE TABLE Productos (
+    id_producto INT AUTO_INCREMENT PRIMARY KEY,  -- Llave primaria
+    nombre VARCHAR(100) NOT NULL,
+    precio DECIMAL(10, 2),
+    stock INT
+);
+
+-- Crear tabla de ventas
+CREATE TABLE Ventas (
+    id_venta INT AUTO_INCREMENT PRIMARY KEY,
+    id_cliente INT,           -- Llave foránea
+    fecha DATE,
+    FOREIGN KEY (id_cliente) REFERENCES Clientes(id_cliente)
+);
+
+-- Crear tabla de detalle de ventas (relación muchos a muchos)
+CREATE TABLE DetalleVenta (
+    id_detalle INT AUTO_INCREMENT PRIMARY KEY,
+    id_venta INT,
+    id_producto INT,
+    cantidad INT,
+    subtotal DECIMAL(10,2),
+    FOREIGN KEY (id_venta) REFERENCES Ventas(id_venta),
+    FOREIGN KEY (id_producto) REFERENCES Productos(id_producto)
+);
+
+*******************************************************
+INSERTAR DATOS BD DE TIENDA DE TECNOLOGIA 
+*******************************************************
+
+-- Insertar clientes
+INSERT INTO Clientes (nombre, correo, telefono)
+VALUES ('Juan Pérez', 'juan@example.com', '3111234567');
+
+-- Insertar productos
+INSERT INTO Productos (nombre, precio, stock)
+VALUES ('Arduino Uno', 75000.00, 10),
+       ('Sensor de Temperatura', 25000.00, 50);
+
+-- Registrar una venta
+INSERT INTO Ventas (id_cliente, fecha)
+VALUES (1, '2025-05-07');
+
+-- Registrar detalle de la venta
+INSERT INTO DetalleVenta (id_venta, id_producto, cantidad, subtotal)
+VALUES (1, 1, 2, 150000.00),
+       (1, 2, 1, 25000.00);
+
+*******************************************************
+CONSULTAS BASICAS BD DE TIENDA DE TECNOLOGIA 
+*******************************************************
+
+-- Ver todas las ventas con datos del cliente
+SELECT V.id_venta, C.nombre, V.fecha
+FROM Ventas V
+JOIN Clientes C ON V.id_cliente = C.id_cliente;
+
+-- Ver detalles de una venta específica
+SELECT DV.id_detalle, P.nombre, DV.cantidad, DV.subtotal
+FROM DetalleVenta DV
+JOIN Productos P ON DV.id_producto = P.id_producto
+WHERE DV.id_venta = 1;
+
+*******************************************************
+CARACTERISTICAS BD DE TIENDA DE TECNOLOGIA 
+*******************************************************
+
+Entidades reales: Clientes, Productos, Ventas.
+
+Relaciones:
+
+- Uno a muchos: Cliente → Ventas.
+- Muchos a muchos: Venta ↔ Productos (resuelta con DetalleVenta).
+
+Integridad referencial: Llaves foráneas bien definidas.
+Normalización: Separación clara entre datos repetibles y únicos.
+
+
+
+
+
+

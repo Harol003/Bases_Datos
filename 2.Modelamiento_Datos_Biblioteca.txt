@@ -1,0 +1,80 @@
+***********************************************************
+Ejemplo: Base de Datos para Gestión de Biblioteca
+***********************************************************
+
+
+Objetivo: Modelar una base de datos que gestione libros, autores, usuarios y préstamos. Usaremos los tipos de datos correctos según el tipo de información a almacenar.
+
+
+***********************************************************
+DISEÑO BD GESTION BIBLIOTECA
+***********************************************************
+
+-- Tabla de autores
+CREATE TABLE autores (
+    id_autor INT AUTO_INCREMENT PRIMARY KEY,           -- Clave primaria entera
+    nombre_autor VARCHAR(100) NOT NULL,                -- Texto variable
+    nacionalidad VARCHAR(50),                          -- Texto variable
+    fecha_nacimiento DATE                              -- Fecha sin hora
+);
+
+-- Tabla de libros
+CREATE TABLE libros (
+    id_libro INT AUTO_INCREMENT PRIMARY KEY,           -- Clave primaria
+    titulo VARCHAR(150) NOT NULL,                      -- Título del libro
+    anio_publicacion YEAR,                             -- Año específico
+    precio DECIMAL(8,2),                               -- Precio con decimales
+    disponible BOOLEAN DEFAULT TRUE,                   -- Disponible o no
+    id_autor INT,                                      -- Relación con autor
+
+    FOREIGN KEY (id_autor) REFERENCES autores(id_autor)
+);
+
+-- Tabla de usuarios
+CREATE TABLE usuarios (
+    id_usuario INT AUTO_INCREMENT PRIMARY KEY,         -- Clave primaria
+    nombre_usuario VARCHAR(80) NOT NULL,               -- Nombre de la persona
+    correo VARCHAR(100),                               -- Correo electrónico
+    fecha_registro DATETIME DEFAULT CURRENT_TIMESTAMP  -- Fecha y hora de registro
+);
+
+-- Tabla de préstamos
+CREATE TABLE prestamos (
+    id_prestamo INT AUTO_INCREMENT PRIMARY KEY,        -- Clave primaria
+    id_libro INT NOT NULL,                             -- Relación con libro
+    id_usuario INT NOT NULL,                           -- Relación con usuario
+    fecha_prestamo DATE,                               -- Fecha en que se prestó
+    fecha_devolucion DATE,                             -- Fecha estimada de devolución
+    devuelto BOOLEAN DEFAULT FALSE,                    -- Estado del libro
+
+    FOREIGN KEY (id_libro) REFERENCES libros(id_libro),
+    FOREIGN KEY (id_usuario) REFERENCES usuarios(id_usuario)
+);
+
+
+***********************************************************
+DETALLE BD GESTION BIBLIOTECA
+***********************************************************
+
+
+| Campo          | Tipo de Dato                | ¿Por qué se usa?                          |
+| -------------- | --------------------------- | ----------------------------------------- |
+| `INT`          | Claves primarias y foráneas | Valores enteros únicos, autoincrementales |
+| `VARCHAR(n)`   | Nombres, correos, títulos   | Texto de longitud variable y moderada     |
+| `DECIMAL(p,s)` | Precio del libro            | Precisión exacta para dinero              |
+| `DATE`         | Fechas de préstamo          | Preciso y eficiente para fechas           |
+| `DATETIME`     | Registro con hora           | Útil para logs o auditorías               |
+| `BOOLEAN`      | Disponible/devuelto         | Representa estados binarios               |
+| `YEAR`         | Año de publicación          | Guarda solo el año, útil para libros      |
+
+
+***********************************************************
+FINALIZACION BD GESTION BIBLIOTECA
+***********************************************************
+
+Este modelamiento refleja buenas prácticas en bases de datos:
+
+Tipos de datos apropiados según el uso.
+Relación entre entidades con claves foráneas.
+Campos con restricciones (NOT NULL, DEFAULT).
+Tipos numéricos y de texto con tamaños bien definidos.
