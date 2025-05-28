@@ -1,0 +1,99 @@
+********************************
+Ejemplo BD Colegio
+********************************
+
+-- Crear base de datos
+CREATE DATABASE colegio_electronica;
+USE colegio_electronica;
+
+-- Tabla de grados
+CREATE TABLE grados (
+    id_grado INT PRIMARY KEY AUTO_INCREMENT,
+    nombre_grado VARCHAR(50),
+    nivel VARCHAR(20) -- primaria o secundaria
+);
+
+-- Tabla de estudiantes
+CREATE TABLE estudiantes (
+    id_estudiante INT PRIMARY KEY AUTO_INCREMENT,
+    nombres VARCHAR(50),
+    apellidos VARCHAR(50),
+    fecha_nacimiento DATE,
+    genero VARCHAR(10),
+    id_grado INT,
+    FOREIGN KEY (id_grado) REFERENCES grados(id_grado)
+);
+
+-- Tabla de docentes
+CREATE TABLE docentes (
+    id_docente INT PRIMARY KEY AUTO_INCREMENT,
+    nombres VARCHAR(50),
+    apellidos VARCHAR(50),
+    especialidad VARCHAR(50)
+);
+
+-- Tabla de materias
+CREATE TABLE materias (
+    id_materia INT PRIMARY KEY AUTO_INCREMENT,
+    nombre_materia VARCHAR(50),
+    intensidad_horaria INT
+);
+
+-- Tabla de matriculas
+CREATE TABLE matriculas (
+    id_matricula INT PRIMARY KEY AUTO_INCREMENT,
+    id_estudiante INT,
+    anio_lectivo INT,
+    fecha_matricula DATE,
+    FOREIGN KEY (id_estudiante) REFERENCES estudiantes(id_estudiante)
+);
+
+-- Tabla de asignaciones docentes a materias
+CREATE TABLE asignaciones_docentes (
+    id_asignacion INT PRIMARY KEY AUTO_INCREMENT,
+    id_docente INT,
+    id_materia INT,
+    id_grado INT,
+    FOREIGN KEY (id_docente) REFERENCES docentes(id_docente),
+    FOREIGN KEY (id_materia) REFERENCES materias(id_materia),
+    FOREIGN KEY (id_grado) REFERENCES grados(id_grado)
+);
+
+-- Tabla de notas
+CREATE TABLE notas (
+    id_nota INT PRIMARY KEY AUTO_INCREMENT,
+    id_estudiante INT,
+    id_materia INT,
+    periodo INT,
+    nota DECIMAL(3,1),
+    FOREIGN KEY (id_estudiante) REFERENCES estudiantes(id_estudiante),
+    FOREIGN KEY (id_materia) REFERENCES materias(id_materia)
+);
+
+-- Tabla de proyectos de electrónica
+CREATE TABLE proyectos_electronica (
+    id_proyecto INT PRIMARY KEY AUTO_INCREMENT,
+    titulo VARCHAR(100),
+    descripcion TEXT,
+    id_estudiante INT,
+    fecha_entrega DATE,
+    FOREIGN KEY (id_estudiante) REFERENCES estudiantes(id_estudiante)
+);
+
+-- Tabla de asistencias
+CREATE TABLE asistencias (
+    id_asistencia INT PRIMARY KEY AUTO_INCREMENT,
+    id_estudiante INT,
+    fecha DATE,
+    presente BOOLEAN,
+    FOREIGN KEY (id_estudiante) REFERENCES estudiantes(id_estudiante)
+);
+
+-- Tabla de usuarios (sistema escolar)
+CREATE TABLE usuarios (
+    id_usuario INT PRIMARY KEY AUTO_INCREMENT,
+    nombre_usuario VARCHAR(50),
+    clave VARCHAR(100),
+    rol VARCHAR(20) -- estudiante, docente, administrador
+);
+

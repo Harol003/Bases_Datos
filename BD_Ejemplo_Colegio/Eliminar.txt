@@ -1,0 +1,15 @@
+******************************************
+Eliminar
+******************************************
+
+DELETE FROM asistencias WHERE presente = FALSE;
+DELETE FROM notas WHERE nota < 3.0;
+DELETE FROM usuarios WHERE rol = 'estudiante' AND nombre_usuario = 'camilaC';
+DELETE FROM proyectos_electronica WHERE titulo = 'Barrera infrarroja';
+DELETE FROM matriculas WHERE anio_lectivo < 2023;
+
+DELETE FROM asignaciones_docentes WHERE id_docente = 10;
+DELETE FROM docentes WHERE especialidad = 'Química';
+DELETE FROM materias WHERE intensidad_horaria < 3;
+DELETE FROM grados WHERE nombre_grado = 'Decimo';
+DELETE FROM estudiantes WHERE nombres = 'Miguel' AND apellidos = 'Suárez';

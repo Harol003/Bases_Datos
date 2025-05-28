@@ -1,0 +1,31 @@
+******************************************
+Modificar
+******************************************
+
+-- BÁSICAS
+UPDATE estudiantes SET genero = 'Femenino' WHERE id_estudiante = 1;
+UPDATE materias SET intensidad_horaria = 6 WHERE nombre_materia = 'Electrónica';
+UPDATE usuarios SET clave = 'nuevaClave123' WHERE nombre_usuario = 'juanp';
+UPDATE grados SET nombre_grado = 'Primer Grado' WHERE id_grado = 1;
+UPDATE docentes SET especialidad = 'Robótica' WHERE id_docente = 7;
+
+-- AVANZADAS
+UPDATE notas
+SET nota = nota + 0.5
+WHERE id_materia = 6 AND nota < 4.0;
+
+UPDATE asistencias
+SET presente = TRUE
+WHERE fecha = '2024-05-20' AND id_estudiante IN (3, 6, 10);
+
+UPDATE proyectos_electronica
+SET descripcion = CONCAT(descripcion, ' - Proyecto evaluado')
+WHERE fecha_entrega < '2024-05-15';
+
+UPDATE estudiantes
+SET id_grado = id_grado + 1
+WHERE id_grado < 10;
+
+UPDATE usuarios
+SET rol = 'coordinador'
+WHERE nombre_usuario = 'admin';

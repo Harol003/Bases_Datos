@@ -1,0 +1,133 @@
+********************************
+Insertar Datos
+********************************
+
+-- Insertar grados
+INSERT INTO grados (nombre_grado, nivel) VALUES
+('Primero', 'primaria'),
+('Segundo', 'primaria'),
+('Tercero', 'primaria'),
+('Cuarto', 'primaria'),
+('Quinto', 'primaria'),
+('Sexto', 'secundaria'),
+('Septimo', 'secundaria'),
+('Octavo', 'secundaria'),
+('Noveno', 'secundaria'),
+('Decimo', 'secundaria');
+
+-- Insertar estudiantes
+INSERT INTO estudiantes (nombres, apellidos, fecha_nacimiento, genero, id_grado) VALUES
+('Juan', 'Pérez', '2011-03-12', 'Masculino', 1),
+('María', 'Gómez', '2010-05-21', 'Femenino', 2),
+('Carlos', 'Rodríguez', '2009-08-14', 'Masculino', 3),
+('Laura', 'Martínez', '2008-09-19', 'Femenino', 4),
+('Andrés', 'Ramírez', '2007-11-02', 'Masculino', 5),
+('Luisa', 'Torres', '2006-07-16', 'Femenino', 6),
+('David', 'Moreno', '2005-12-30', 'Masculino', 7),
+('Ana', 'Vargas', '2004-04-25', 'Femenino', 8),
+('Miguel', 'Suárez', '2003-10-03', 'Masculino', 9),
+('Camila', 'Castro', '2002-06-18', 'Femenino', 10);
+
+-- Insertar docentes
+INSERT INTO docentes (nombres, apellidos, especialidad) VALUES
+('Luis', 'Hernández', 'Matemáticas'),
+('Sandra', 'Ruiz', 'Ciencias Naturales'),
+('Pedro', 'López', 'Español'),
+('Diana', 'Cárdenas', 'Tecnología'),
+('Oscar', 'Sánchez', 'Educación Física'),
+('Tatiana', 'Morales', 'Inglés'),
+('Jorge', 'Mejía', 'Electrónica'),
+('Carolina', 'Navarro', 'Informática'),
+('Andrés', 'Quintero', 'Física'),
+('Natalia', 'Pineda', 'Química');
+
+-- Insertar materias
+INSERT INTO materias (nombre_materia, intensidad_horaria) VALUES
+('Matemáticas', 5),
+('Español', 4),
+('Ciencias', 4),
+('Tecnología', 3),
+('Inglés', 3),
+('Electrónica', 5),
+('Educación Física', 2),
+('Informática', 3),
+('Física', 4),
+('Química', 4);
+
+-- Insertar matriculas
+INSERT INTO matriculas (id_estudiante, anio_lectivo, fecha_matricula) VALUES
+(1, 2024, '2024-01-10'),
+(2, 2024, '2024-01-11'),
+(3, 2024, '2024-01-12'),
+(4, 2024, '2024-01-13'),
+(5, 2024, '2024-01-14'),
+(6, 2024, '2024-01-15'),
+(7, 2024, '2024-01-16'),
+(8, 2024, '2024-01-17'),
+(9, 2024, '2024-01-18'),
+(10, 2024, '2024-01-19');
+
+-- Insertar asignaciones docentes
+INSERT INTO asignaciones_docentes (id_docente, id_materia, id_grado) VALUES
+(1, 1, 1),
+(2, 3, 2),
+(3, 2, 3),
+(4, 4, 4),
+(5, 7, 5),
+(6, 5, 6),
+(7, 6, 7),
+(8, 8, 8),
+(9, 9, 9),
+(10, 10, 10);
+
+-- Insertar notas
+INSERT INTO notas (id_estudiante, id_materia, periodo, nota) VALUES
+(1, 1, 1, 4.5),
+(2, 2, 1, 3.8),
+(3, 3, 1, 4.0),
+(4, 4, 1, 4.2),
+(5, 5, 1, 3.5),
+(6, 6, 1, 4.8),
+(7, 7, 1, 4.1),
+(8, 8, 1, 3.9),
+(9, 9, 1, 3.7),
+(10, 10, 1, 4.4);
+
+-- Insertar proyectos de electrónica
+INSERT INTO proyectos_electronica (titulo, descripcion, id_estudiante, fecha_entrega) VALUES
+('Semáforo con LEDs', 'Control de luces con transistores', 6, '2024-05-10'),
+('Detector de lluvia', 'Sensor capacitivo con buzzer', 7, '2024-05-11'),
+('Lámpara automática', 'Fotoresistencia con relé', 8, '2024-05-12'),
+('Alarma con sensor PIR', 'Detector de movimiento básico', 9, '2024-05-13'),
+('Ventilador solar', 'Motor DC con panel solar', 10, '2024-05-14'),
+('Semáforo miniatura', 'Secuencia con 555 y LEDs', 1, '2024-05-15'),
+('Pulsador de timbre', 'Circuito con campana y push', 2, '2024-05-16'),
+('Barrera infrarroja', 'Emisor y receptor IR', 3, '2024-05-17'),
+('Alarma magnética', 'Reed switch y transistor', 4, '2024-05-18'),
+('Detector de temperatura', 'NTC y amplificador', 5, '2024-05-19');
+
+-- Insertar asistencias
+INSERT INTO asistencias (id_estudiante, fecha, presente) VALUES
+(1, '2024-05-20', TRUE),
+(2, '2024-05-20', TRUE),
+(3, '2024-05-20', FALSE),
+(4, '2024-05-20', TRUE),
+(5, '2024-05-20', TRUE),
+(6, '2024-05-20', FALSE),
+(7, '2024-05-20', TRUE),
+(8, '2024-05-20', TRUE),
+(9, '2024-05-20', TRUE),
+(10, '2024-05-20', FALSE);
+
+-- Insertar usuarios
+INSERT INTO usuarios (nombre_usuario, clave, rol) VALUES
+('admin', 'admin123', 'administrador'),
+('juanp', 'clave123', 'estudiante'),
+('mariag', 'clave123', 'estudiante'),
+('luistorres', 'prof123', 'docente'),
+('carolinaN', 'tecno456', 'docente'),
+('camilaC', 'clave789', 'estudiante'),
+('andresR', 'clave456', 'estudiante'),
+('jorgeM', 'claveprofe', 'docente'),
+('lauram', '123456', 'estudiante'),
+('dianac', 'docente2024', 'docente');

@@ -1,0 +1,34 @@
+***************************************************
+CONSULTAR
+***************************************************
+
+
+-- BÁSICAS
+SELECT * FROM estudiantes;
+SELECT nombres, apellidos FROM docentes;
+SELECT nombre_materia FROM materias WHERE intensidad_horaria > 3;
+SELECT * FROM asistencias WHERE presente = FALSE;
+SELECT * FROM usuarios WHERE rol = 'estudiante';
+
+-- AVANZADAS
+SELECT e.nombres, e.apellidos, g.nombre_grado
+FROM estudiantes e
+JOIN grados g ON e.id_grado = g.id_grado;
+
+SELECT d.nombres, d.apellidos, m.nombre_materia
+FROM asignaciones_docentes ad
+JOIN docentes d ON ad.id_docente = d.id_docente
+JOIN materias m ON ad.id_materia = m.id_materia;
+
+SELECT e.nombres, n.nota
+FROM estudiantes e
+JOIN notas n ON e.id_estudiante = n.id_estudiante
+WHERE n.periodo = 1 AND n.nota >= 4.0;
+
+SELECT COUNT(*) AS total_estudiantes, id_grado
+FROM estudiantes
+GROUP BY id_grado;
+
+SELECT p.titulo, e.nombres
+FROM proyectos_electronica p
+JOIN estudiantes e ON p.id_estudiante = e.id_estudiante;
