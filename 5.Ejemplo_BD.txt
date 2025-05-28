@@ -1,0 +1,192 @@
+-- --------------------------------------------------
+-- SCRIPT COMPLETO CRUD PARA PROYECTO: TIENDA DE ROBÓTICA
+-- --------------------------------------------------
+
+-- ✅ CREAR BASE DE DATOS Y USARLA
+CREATE DATABASE tienda_robotica;
+USE tienda_robotica;
+
+-- ✅ TABLA DE PRODUCTOS
+CREATE TABLE productos (
+    id_producto INT AUTO_INCREMENT PRIMARY KEY,
+    nombre VARCHAR(100) NOT NULL,
+    descripcion TEXT,
+    precio DECIMAL(10,2),
+    stock INT,
+    categoria VARCHAR(50)
+);
+
+-- ✅ TABLA DE CLIENTES
+CREATE TABLE clientes (
+    id_cliente INT AUTO_INCREMENT PRIMARY KEY,
+    nombre VARCHAR(100),
+    correo VARCHAR(100),
+    telefono VARCHAR(20),
+    direccion TEXT
+);
+
+-- ✅ TABLA DE VENTAS (CON CLAVES FORÁNEAS)
+CREATE TABLE ventas (
+    id_venta INT AUTO_INCREMENT PRIMARY KEY,
+    id_cliente INT,
+    id_producto INT,
+    cantidad INT,
+    fecha_venta DATE,
+    FOREIGN KEY (id_cliente) REFERENCES clientes(id_cliente),
+    FOREIGN KEY (id_producto) REFERENCES productos(id_producto)
+);
+
+-- --------------------------------------------------
+-- 🟢 10 INSERTS POR TABLA
+-- --------------------------------------------------
+
+-- INSERTS EN PRODUCTOS
+INSERT INTO productos (nombre, descripcion, precio, stock, categoria) VALUES
+('Arduino Uno', 'Microcontrolador para proyectos', 85000, 10, 'Arduino'),
+('Sensor ultrasónico', 'Medición de distancia', 12000, 25, 'Sensores'),
+('Motor servo', 'Motor de rotación controlada', 18000, 15, 'Motores'),
+('Protoboard', 'Placa de pruebas', 5000, 30, 'Accesorios'),
+('Resistencia 220Ω', 'Resistencias comunes', 100, 200, 'Componentes'),
+('LED rojo', 'Diodo emisor de luz', 300, 150, 'Componentes'),
+('Cable jumper', 'Cables para conexión', 1000, 100, 'Accesorios'),
+('Sensor infrarrojo', 'Detección de obstáculos', 15000, 20, 'Sensores'),
+('Pantalla LCD', 'Visualización de datos', 25000, 10, 'Pantallas'),
+('Raspberry Pi Pico', 'Microcontrolador de bajo costo', 50000, 5, 'Controladores');
+
+-- INSERTS EN CLIENTES
+INSERT INTO clientes (nombre, correo, telefono, direccion) VALUES
+('Ana Pérez', 'ana@example.com', '3101234567', 'Calle 123 #45-67'),
+('Luis Gómez', 'luisg@example.com', '3201112233', 'Cra 7 #89-10'),
+('Marta Ríos', 'marta@example.com', '3009998877', 'Av 68 #70-50'),
+('Carlos Peña', 'carlos@example.com', '3113344556', 'Calle 10 #20-30'),
+('Diana López', 'diana@example.com', '3125566778', 'Cra 15 #80-90'),
+('Andrés Torres', 'andres@example.com', '3136677889', 'Av 1 #1-1'),
+('Lucía Rojas', 'lucia@example.com', '3147788990', 'Calle 99 #10-10'),
+('Pedro Márquez', 'pedro@example.com', '3158899001', 'Cra 3 #33-33'),
+('Juliana Díaz', 'juliana@example.com', '3169900112', 'Av 68 #40-40'),
+('Santiago Cruz', 'santiago@example.com', '3171011121', 'Calle 5 #55-55');
+
+-- INSERTS EN VENTAS
+INSERT INTO ventas (id_cliente, id_producto, cantidad, fecha_venta) VALUES
+(1, 1, 1, '2024-10-01'),
+(2, 3, 2, '2024-10-01'),
+(3, 2, 1, '2024-10-02'),
+(4, 4, 1, '2024-10-02'),
+(5, 1, 1, '2024-10-03'),
+(6, 5, 10, '2024-10-04'),
+(7, 6, 20, '2024-10-04'),
+(8, 9, 1, '2024-10-05'),
+(9, 10, 1, '2024-10-06'),
+(10, 8, 2, '2024-10-06');
+
+-- --------------------------------------------------
+-- 🔎 10 SELECTS
+-- --------------------------------------------------
+
+-- 1. Ver todos los productos
+SELECT * FROM productos;
+
+-- 2. Ver productos con stock menor a 10
+SELECT * FROM productos WHERE stock < 10;
+
+-- 3. Ver clientes ordenados alfabéticamente
+SELECT * FROM clientes ORDER BY nombre;
+
+-- 4. Ver ventas con JOIN
+SELECT v.id_venta, c.nombre, p.nombre, v.cantidad, v.fecha_venta
+FROM ventas v
+JOIN clientes c ON v.id_cliente = c.id_cliente
+JOIN productos p ON v.id_producto = p.id_producto;
+
+-- 5. Buscar productos de la categoría "Sensores"
+SELECT * FROM productos WHERE categoria = 'Sensores';
+
+-- 6. Buscar cliente por correo
+SELECT * FROM clientes WHERE correo = 'marta@example.com';
+
+-- 7. Ver total de productos vendidos por nombre
+SELECT p.nombre, SUM(v.cantidad) AS total_vendido
+FROM ventas v
+JOIN productos p ON v.id_producto = p.id_producto
+GROUP BY p.nombre;
+
+-- 8. Ver ventas de un cliente específico
+SELECT * FROM ventas WHERE id_cliente = 3;
+
+-- 9. Contar cantidad de clientes
+SELECT COUNT(*) AS total_clientes FROM clientes;
+
+-- 10. Ver los productos con precio entre 10000 y 30000
+SELECT * FROM productos WHERE precio BETWEEN 10000 AND 30000;
+
+-- --------------------------------------------------
+-- ✏️ 10 UPDATES
+-- --------------------------------------------------
+
+-- Aumentar stock de producto 1
+UPDATE productos SET stock = stock + 5 WHERE id_producto = 1;
+
+-- Cambiar dirección de cliente 2
+UPDATE clientes SET direccion = 'Nueva dirección 101' WHERE id_cliente = 2;
+
+-- Cambiar categoría de un producto
+UPDATE productos SET categoria = 'Microcontroladores' WHERE id_producto = 10;
+
+-- Corregir nombre de cliente
+UPDATE clientes SET nombre = 'Luis Alberto Gómez' WHERE id_cliente = 2;
+
+-- Actualizar correo de cliente 4
+UPDATE clientes SET correo = 'nuevo_carlos@example.com' WHERE id_cliente = 4;
+
+-- Actualizar precio del producto 3
+UPDATE productos SET precio = 19500 WHERE id_producto = 3;
+
+-- Cambiar cantidad de una venta
+UPDATE ventas SET cantidad = 3 WHERE id_venta = 2;
+
+-- Cambiar fecha de venta
+UPDATE ventas SET fecha_venta = '2024-10-10' WHERE id_venta = 6;
+
+-- Disminuir stock del producto 5
+UPDATE productos SET stock = stock - 5 WHERE id_producto = 5;
+
+-- Cambiar teléfono del cliente 9
+UPDATE clientes SET telefono = '3111234567' WHERE id_cliente = 9;
+
+-- --------------------------------------------------
+-- 🗑️ 10 DELETES
+-- --------------------------------------------------
+
+-- Eliminar venta 10
+DELETE FROM ventas WHERE id_venta = 10;
+
+-- Eliminar cliente 10
+DELETE FROM clientes WHERE id_cliente = 10;
+
+-- Eliminar producto 10
+DELETE FROM productos WHERE id_producto = 10;
+
+-- Eliminar ventas de cliente 6
+DELETE FROM ventas WHERE id_cliente = 6;
+
+-- Eliminar productos sin stock
+DELETE FROM productos WHERE stock = 0;
+
+-- Eliminar cliente por nombre
+DELETE FROM clientes WHERE nombre = 'Pedro Márquez';
+
+-- Eliminar productos por categoría
+DELETE FROM productos WHERE categoria = 'Pantallas';
+
+-- Eliminar ventas del día 2024-10-01
+DELETE FROM ventas WHERE fecha_venta = '2024-10-01';
+
+-- Eliminar cliente por correo
+DELETE FROM clientes WHERE correo = 'juliana@example.com';
+
+-- Eliminar ventas con cantidad menor a 2
+DELETE FROM ventas WHERE cantidad < 2;
+
+-- --------------------------------------------------
+-- FIN DEL SCRIPT CRUD
+-- --------------------------------------------------
