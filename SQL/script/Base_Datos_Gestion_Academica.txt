@@ -1,0 +1,514 @@
+/* 
+====================================================================
+              PRIMERA CLASE DE SQL SERVER - NIVEL TECNICO
+====================================================================
+
+TEMAS:
+1. Creacion de base de datos
+2. Tipos de datos
+3. Llaves primarias
+4. Llaves foraneas
+5. Restricciones
+6. CRUD completo
+7. Consultas
+8. Relaciones entre tablas
+
+OBJETIVO:
+Comprender el funcionamiento basico de SQL Server utilizando
+sentencias DDL y DML.
+
+DDL = Data Definition Language
+      Lenguaje de definicion de datos
+      Ejemplo: CREATE, ALTER, DROP
+
+DML = Data Manipulation Language
+      Lenguaje de manipulacion de datos
+      Ejemplo: INSERT, UPDATE, DELETE, SELECT
+
+====================================================================
+*/
+
+
+/* ================================================================
+   CREACION DE LA BASE DE DATOS
+   ================================================================ */
+
+/*
+CREATE DATABASE:
+Permite crear una nueva base de datos fisica dentro del motor SQL Server.
+*/
+
+CREATE DATABASE SistemaAcademico;
+GO
+
+/*
+USE:
+Selecciona la base de datos sobre la cual se trabajara.
+*/
+
+USE SistemaAcademico;
+GO
+
+
+
+/* ================================================================
+   CREACION DE TABLAS
+   ================================================================ */
+
+/*
+TABLA: estudiantes
+
+CONCEPTOS TECNICOS:
+- IDENTITY(1,1):
+  Genera valores automaticos.
+  Primer numero = inicio
+  Segundo numero = incremento
+
+- PRIMARY KEY:
+  Identificador unico de cada registro.
+
+- VARCHAR:
+  Tipo de dato de texto variable.
+
+- NOT NULL:
+  Campo obligatorio.
+
+- UNIQUE:
+  No permite valores repetidos.
+*/
+
+CREATE TABLE estudiantes(
+
+    id_estudiante INT IDENTITY(1,1) PRIMARY KEY,
+
+    documento VARCHAR(20) UNIQUE NOT NULL,
+
+    nombres VARCHAR(100) NOT NULL,
+
+    apellidos VARCHAR(100) NOT NULL,
+
+    edad INT CHECK(edad >= 10),
+
+    correo VARCHAR(100),
+
+    curso VARCHAR(10),
+
+    fecha_registro DATETIME DEFAULT GETDATE()
+
+);
+
+GO
+
+
+
+/* ================================================================
+   TABLA: profesores
+   ================================================================ */
+
+CREATE TABLE profesores(
+
+    id_profesor INT IDENTITY(1,1) PRIMARY KEY,
+
+    nombres VARCHAR(100) NOT NULL,
+
+    especialidad VARCHAR(100),
+
+    salario DECIMAL(10,2),
+
+    activo BIT DEFAULT 1
+
+);
+
+GO
+
+
+
+/* ================================================================
+   TABLA: materias
+   ================================================================ */
+
+/*
+FOREIGN KEY:
+Crea una relacion entre tablas.
+
+Un profesor puede tener varias materias.
+*/
+
+CREATE TABLE materias(
+
+    id_materia INT IDENTITY(1,1) PRIMARY KEY,
+
+    nombre_materia VARCHAR(100) NOT NULL,
+
+    intensidad_horaria INT,
+
+    id_profesor INT,
+
+    CONSTRAINT FK_materias_profesores
+    FOREIGN KEY(id_profesor)
+    REFERENCES profesores(id_profesor)
+
+);
+
+GO
+
+
+
+/* ================================================================
+   INSERTAR REGISTROS
+   ================================================================ */
+
+/*
+INSERT INTO:
+Inserta nuevos registros en una tabla.
+
+Sintaxis:
+INSERT INTO tabla(columnas)
+VALUES(valores)
+*/
+
+
+/* INSERTAR ESTUDIANTES */
+
+INSERT INTO estudiantes
+(documento, nombres, apellidos, edad, correo, curso)
+
+VALUES
+('1001','Carlos','Perez',15,'carlos@colegio.edu','901'),
+('1002','Ana','Gomez',14,'ana@colegio.edu','902'),
+('1003','Luisa','Martinez',16,'luisa@colegio.edu','903');
+
+GO
+
+
+
+/* INSERTAR PROFESORES */
+
+INSERT INTO profesores
+(nombres, especialidad, salario)
+
+VALUES
+('Jorge Ramirez','Electronica',3500000),
+('Martha Lopez','Programacion',4200000);
+
+GO
+
+
+
+/* INSERTAR MATERIAS */
+
+INSERT INTO materias
+(nombre_materia, intensidad_horaria, id_profesor)
+
+VALUES
+('Base de Datos',4,2),
+('Electronica Digital',3,1),
+('Programacion Java',5,2);
+
+GO
+
+
+
+/* ================================================================
+   CONSULTAS BASICAS
+   ================================================================ */
+
+/*
+SELECT:
+Permite consultar informacion almacenada.
+*/
+
+
+/* CONSULTAR TODOS LOS CAMPOS */
+
+SELECT * FROM estudiantes;
+
+GO
+
+
+
+/* CONSULTAR CAMPOS ESPECIFICOS */
+
+SELECT 
+    nombres,
+    apellidos,
+    curso
+FROM estudiantes;
+
+GO
+
+
+
+/* ================================================================
+   FILTROS CON WHERE
+   ================================================================ */
+
+/*
+WHERE:
+Permite aplicar condiciones.
+*/
+
+
+/* ESTUDIANTES MAYORES DE 14 AÑOS */
+
+SELECT *
+FROM estudiantes
+WHERE edad > 14;
+
+GO
+
+
+
+/* ESTUDIANTES DEL CURSO 902 */
+
+SELECT *
+FROM estudiantes
+WHERE curso = '902';
+
+GO
+
+
+
+/* ================================================================
+   OPERADORES LOGICOS
+   ================================================================ */
+
+/*
+AND:
+Ambas condiciones deben cumplirse.
+
+OR:
+Al menos una condicion debe cumplirse.
+*/
+
+
+SELECT *
+FROM estudiantes
+WHERE edad >= 14
+AND curso = '903';
+
+GO
+
+
+
+/* ================================================================
+   ORDENAMIENTO DE DATOS
+   ================================================================ */
+
+/*
+ORDER BY:
+Ordena resultados.
+
+ASC  = Ascendente
+DESC = Descendente
+*/
+
+SELECT *
+FROM estudiantes
+ORDER BY edad DESC;
+
+GO
+
+
+
+/* ================================================================
+   ACTUALIZACION DE REGISTROS
+   ================================================================ */
+
+/*
+UPDATE:
+Modifica registros existentes.
+
+SET:
+Define los nuevos valores.
+*/
+
+
+/* ACTUALIZAR CURSO */
+
+UPDATE estudiantes
+SET curso = '1001'
+WHERE documento = '1002';
+
+GO
+
+
+
+/* ACTUALIZAR SALARIO */
+
+UPDATE profesores
+SET salario = 4500000
+WHERE id_profesor = 2;
+
+GO
+
+
+
+/* ================================================================
+   ELIMINACION DE REGISTROS
+   ================================================================ */
+
+/*
+DELETE:
+Elimina registros.
+
+IMPORTANTE:
+Si no se usa WHERE se eliminan TODOS los registros.
+*/
+
+
+DELETE FROM estudiantes
+WHERE documento = '1001';
+
+GO
+
+
+
+/* ================================================================
+   CONSULTAS RELACIONADAS - JOIN
+   ================================================================ */
+
+/*
+INNER JOIN:
+Une tablas relacionadas mediante llaves.
+
+OBJETIVO:
+Mostrar materias y el profesor encargado.
+*/
+
+SELECT
+
+    materias.nombre_materia,
+    materias.intensidad_horaria,
+
+    profesores.nombres AS profesor,
+    profesores.especialidad
+
+FROM materias
+
+INNER JOIN profesores
+ON materias.id_profesor = profesores.id_profesor;
+
+GO
+
+
+
+/* ================================================================
+   FUNCIONES BASICAS
+   ================================================================ */
+
+/*
+COUNT:
+Cuenta registros.
+*/
+
+SELECT COUNT(*) AS total_estudiantes
+FROM estudiantes;
+
+GO
+
+
+
+/*
+AVG:
+Promedio.
+*/
+
+SELECT AVG(salario) AS promedio_salarios
+FROM profesores;
+
+GO
+
+
+
+/*
+MAX y MIN:
+Valor maximo y minimo.
+*/
+
+SELECT 
+    MAX(edad) AS edad_maxima,
+    MIN(edad) AS edad_minima
+FROM estudiantes;
+
+GO
+
+
+
+/* ================================================================
+   ALTER TABLE
+   ================================================================ */
+
+/*
+ALTER TABLE:
+Permite modificar la estructura de una tabla.
+*/
+
+
+/* AGREGAR COLUMNA */
+
+ALTER TABLE estudiantes
+ADD telefono VARCHAR(20);
+
+GO
+
+
+
+/* ================================================================
+   ELIMINAR TABLAS
+   ================================================================ */
+
+/*
+DROP TABLE:
+Elimina completamente una tabla.
+*/
+
+/*
+DROP TABLE materias;
+DROP TABLE profesores;
+DROP TABLE estudiantes;
+GO
+*/
+
+
+
+/* ================================================================
+   ELIMINAR BASE DE DATOS
+   ================================================================ */
+
+/*
+DROP DATABASE:
+Elimina completamente la base de datos.
+*/
+
+/*
+DROP DATABASE SistemaAcademico;
+GO
+*/
+
+
+
+/* ================================================================
+   RESUMEN TECNICO DEL CRUD
+   ================================================================ */
+
+/*
+CRUD = Operaciones fundamentales sobre bases de datos
+
+C = CREATE
+    INSERT INTO
+
+R = READ
+    SELECT
+
+U = UPDATE
+    UPDATE SET
+
+D = DELETE
+    DELETE FROM
+*/
+
+
+/* ================================================================
+   FIN DEL SCRIPT
+   ================================================================ */
