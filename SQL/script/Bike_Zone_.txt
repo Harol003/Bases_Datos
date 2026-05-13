@@ -1,0 +1,355 @@
+/*========================================================
+CREACION DE LA BASE DE DATOS
+========================================================*/
+
+CREATE DATABASE BikeZoneDB;
+GO
+
+USE BikeZoneDB;
+GO
+
+/*========================================================
+TABLA CLIENTES
+========================================================*/
+
+CREATE TABLE Clientes(
+    id_cliente INT PRIMARY KEY IDENTITY(1,1),
+    nombre VARCHAR(100) NOT NULL,
+    telefono VARCHAR(20),
+    correo VARCHAR(100),
+    direccion VARCHAR(200)
+);
+
+GO
+
+/*========================================================
+TABLA EMPLEADOS
+========================================================*/
+
+CREATE TABLE Empleados(
+    id_empleado INT PRIMARY KEY IDENTITY(1,1),
+    nombre VARCHAR(100) NOT NULL,
+    cargo VARCHAR(50),
+    telefono VARCHAR(20)
+);
+
+GO
+
+/*========================================================
+TABLA CATEGORIAS
+========================================================*/
+
+CREATE TABLE Categorias(
+    id_categoria INT PRIMARY KEY IDENTITY(1,1),
+    nombre_categoria VARCHAR(100) NOT NULL
+);
+
+GO
+
+/*========================================================
+TABLA PRODUCTOS
+========================================================*/
+
+CREATE TABLE Productos(
+    id_producto INT PRIMARY KEY IDENTITY(1,1),
+    nombre_producto VARCHAR(100) NOT NULL,
+    precio DECIMAL(10,2),
+    stock INT,
+    id_categoria INT,
+
+    CONSTRAINT FK_Productos_Categorias
+    FOREIGN KEY(id_categoria)
+    REFERENCES Categorias(id_categoria)
+);
+
+GO
+
+/*========================================================
+TABLA VENTAS
+========================================================*/
+
+CREATE TABLE Ventas(
+    id_venta INT PRIMARY KEY IDENTITY(1,1),
+    fecha DATE,
+    total DECIMAL(10,2),
+    id_cliente INT,
+    id_empleado INT,
+
+    CONSTRAINT FK_Ventas_Clientes
+    FOREIGN KEY(id_cliente)
+    REFERENCES Clientes(id_cliente),
+
+    CONSTRAINT FK_Ventas_Empleados
+    FOREIGN KEY(id_empleado)
+    REFERENCES Empleados(id_empleado)
+);
+
+GO
+
+/*========================================================
+TABLA DETALLE VENTA
+========================================================*/
+
+CREATE TABLE DetalleVenta(
+    id_detalle INT PRIMARY KEY IDENTITY(1,1),
+    cantidad INT,
+    subtotal DECIMAL(10,2),
+    id_venta INT,
+    id_producto INT,
+
+    CONSTRAINT FK_DetalleVenta_Ventas
+    FOREIGN KEY(id_venta)
+    REFERENCES Ventas(id_venta),
+
+    CONSTRAINT FK_DetalleVenta_Productos
+    FOREIGN KEY(id_producto)
+    REFERENCES Productos(id_producto)
+);
+
+GO
+
+/*========================================================
+TABLA SERVICIOS TECNICOS
+========================================================*/
+
+CREATE TABLE ServiciosTecnicos(
+    id_servicio INT PRIMARY KEY IDENTITY(1,1),
+    descripcion VARCHAR(200),
+    estado VARCHAR(50),
+    fecha_ingreso DATE,
+    fecha_salida DATE,
+    id_cliente INT,
+
+    CONSTRAINT FK_Servicios_Clientes
+    FOREIGN KEY(id_cliente)
+    REFERENCES Clientes(id_cliente)
+);
+
+GO
+
+/*========================================================
+INSERCION DE DATOS
+========================================================*/
+
+/* CLIENTES */
+
+INSERT INTO Clientes(nombre, telefono, correo, direccion)
+VALUES
+('Carlos Perez','3001111111','carlos@gmail.com','Soacha'),
+('Maria Gomez','3002222222','maria@gmail.com','Bogota'),
+('Juan Torres','3003333333','juan@gmail.com','Mosquera'),
+('Laura Diaz','3004444444','laura@gmail.com','Madrid'),
+('Andres Ruiz','3005555555','andres@gmail.com','Funza');
+
+GO
+
+/* EMPLEADOS */
+
+INSERT INTO Empleados(nombre, cargo, telefono)
+VALUES
+('Pedro Ramirez','Vendedor','3111111111'),
+('Luisa Castro','Tecnico','3222222222'),
+('Camilo Vargas','Administrador','3333333333');
+
+GO
+
+/* CATEGORIAS */
+
+INSERT INTO Categorias(nombre_categoria)
+VALUES
+('Bicicletas'),
+('Accesorios'),
+('Repuestos'),
+('Cascos'),
+('Luces');
+
+GO
+
+/* PRODUCTOS */
+
+INSERT INTO Productos(nombre_producto, precio, stock, id_categoria)
+VALUES
+('Bicicleta MTB',1200000,5,1),
+('Bicicleta Ruta',2500000,3,1),
+('Casco Profesional',150000,10,4),
+('Luz LED',50000,20,5),
+('Pedales',80000,15,3);
+
+GO
+
+/* VENTAS */
+
+INSERT INTO Ventas(fecha,total,id_cliente,id_empleado)
+VALUES
+('2026-05-01',1300000,1,1),
+('2026-05-02',2500000,2,1),
+('2026-05-03',200000,3,2);
+
+GO
+
+/* DETALLE VENTA */
+
+INSERT INTO DetalleVenta(cantidad,subtotal,id_venta,id_producto)
+VALUES
+(1,1200000,1,1),
+(1,100000,1,4),
+(1,2500000,2,2),
+(1,150000,3,3),
+(1,50000,3,4);
+
+GO
+
+/* SERVICIOS TECNICOS */
+
+INSERT INTO ServiciosTecnicos
+(descripcion,estado,fecha_ingreso,fecha_salida,id_cliente)
+VALUES
+('Cambio de frenos','Pendiente','2026-05-01',NULL,1),
+('Mantenimiento general','Terminado','2026-05-02','2026-05-03',2),
+('Ajuste de cambios','Pendiente','2026-05-04',NULL,3);
+
+GO
+
+/*========================================================
+CRUD - CLIENTES
+========================================================*/
+
+/* INSERT */
+
+INSERT INTO Clientes(nombre,telefono,correo,direccion)
+VALUES
+('Sofia Martinez','3010000000','sofia@gmail.com','Bogota');
+
+GO
+
+/* SELECT */
+
+SELECT * FROM Clientes;
+
+GO
+
+/* UPDATE */
+
+UPDATE Clientes
+SET telefono='3999999999'
+WHERE id_cliente=1;
+
+GO
+
+/* DELETE */
+
+DELETE FROM Clientes
+WHERE id_cliente=6;
+
+GO
+
+/*========================================================
+CONSULTA 1
+MOSTRAR CLIENTES
+========================================================*/
+
+SELECT * FROM Clientes;
+
+GO
+
+/*========================================================
+CONSULTA 2
+PRODUCTOS Y CATEGORIAS
+========================================================*/
+
+SELECT
+P.nombre_producto,
+P.precio,
+P.stock,
+C.nombre_categoria
+FROM Productos P
+INNER JOIN Categorias C
+ON P.id_categoria = C.id_categoria;
+
+GO
+
+/*========================================================
+CONSULTA 3
+VENTAS COMPLETAS
+========================================================*/
+
+SELECT
+V.id_venta,
+V.fecha,
+V.total,
+C.nombre AS cliente,
+E.nombre AS empleado
+FROM Ventas V
+INNER JOIN Clientes C
+ON V.id_cliente = C.id_cliente
+INNER JOIN Empleados E
+ON V.id_empleado = E.id_empleado;
+
+GO
+
+/*========================================================
+CONSULTA 4
+TOTAL VENDIDO POR PRODUCTO
+========================================================*/
+
+SELECT
+P.nombre_producto,
+SUM(DV.subtotal) AS total_vendido
+FROM DetalleVenta DV
+INNER JOIN Productos P
+ON DV.id_producto = P.id_producto
+GROUP BY P.nombre_producto;
+
+GO
+
+/*========================================================
+CONSULTA 5
+CLIENTES CON SERVICIO TECNICO
+========================================================*/
+
+SELECT
+C.nombre,
+S.descripcion,
+S.estado
+FROM ServiciosTecnicos S
+INNER JOIN Clientes C
+ON S.id_cliente = C.id_cliente;
+
+GO
+
+/*========================================================
+CONSULTA 6
+PRODUCTOS CON STOCK BAJO
+========================================================*/
+
+SELECT *
+FROM Productos
+WHERE stock < 5;
+
+GO
+
+/*========================================================
+CONSULTA 7
+TOTAL VENDIDO POR EMPLEADO
+========================================================*/
+
+SELECT
+E.nombre,
+SUM(V.total) AS total_vendido
+FROM Ventas V
+INNER JOIN Empleados E
+ON V.id_empleado = E.id_empleado
+GROUP BY E.nombre;
+
+GO
+
+/*========================================================
+CONSULTA 8
+SERVICIOS PENDIENTES
+========================================================*/
+
+SELECT *
+FROM ServiciosTecnicos
+WHERE estado='Pendiente';
+
+GO
