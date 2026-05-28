@@ -1,0 +1,1045 @@
+# SCRIPT SQL SERVER COMPLETO — POLIELECTRONICA
+
+# VERSION COMPLETA Y COMENTADA
+
+# AUTOR: [Harol.Torres@pi.edu.co](mailto:Harol.Torres@pi.edu.co)
+
+```sql
+/* =========================================================
+   PROYECTO: POLIELECTRONICA
+   AUTOR: Harol.Torres@pi.edu.co
+   TECNOLOGIA: SQL SERVER
+
+   DESCRIPCION:
+   SISTEMA DE GESTION PARA UNA TIENDA
+   DE ELECTRONICA Y TECNOLOGIA.
+
+   EL SISTEMA PERMITE:
+   - REGISTRAR CLIENTES
+   - REGISTRAR EMPLEADOS
+   - REGISTRAR PRODUCTOS
+   - CONTROLAR INVENTARIO
+   - REGISTRAR VENTAS
+   - REGISTRAR SERVICIOS TECNICOS
+   - EJECUTAR CONSULTAS AVANZADAS
+
+   ESTE SCRIPT CONTIENE:
+   ✔ CREATE DATABASE
+   ✔ CREATE TABLE
+   ✔ PRIMARY KEY
+   ✔ FOREIGN KEY
+   ✔ CHECK
+   ✔ UNIQUE
+   ✔ INSERT
+   ✔ SELECT
+   ✔ UPDATE
+   ✔ DELETE
+   ✔ INNER JOIN
+   ✔ LEFT JOIN
+   ✔ RIGHT JOIN
+   ✔ LEFT OUTER JOIN
+   ✔ RIGHT OUTER JOIN
+   ✔ GROUP BY
+   ✔ HAVING
+   ✔ ORDER BY
+   ✔ BETWEEN
+   ✔ LIKE
+   ✔ IN
+   ✔ EXISTS
+   ✔ CASE
+   ✔ VISTAS
+   ✔ PROCEDIMIENTOS
+   ✔ TRIGGERS
+========================================================= */
+
+
+
+/* =========================================================
+   PASO 1 - CREAR LA BASE DE DATOS
+========================================================= */
+
+CREATE DATABASE POLIELECTRONICADB;
+GO
+
+
+
+/* =========================================================
+   PASO 2 - USAR LA BASE DE DATOS
+========================================================= */
+
+USE POLIELECTRONICADB;
+GO
+
+
+
+/* =========================================================
+   TABLA 1 - CLIENTES
+
+   ESTA TABLA ALMACENA LOS DATOS
+   DE LOS CLIENTES DE LA TIENDA.
+========================================================= */
+
+CREATE TABLE Clientes(
+
+    /* LLAVE PRIMARIA */
+    id_cliente INT PRIMARY KEY IDENTITY(1,1),
+
+    /* NOMBRE DEL CLIENTE */
+    nombre VARCHAR(100) NOT NULL,
+
+    /* APELLIDO DEL CLIENTE */
+    apellido VARCHAR(100) NOT NULL,
+
+    /* TELEFONO UNICO */
+    telefono VARCHAR(20) UNIQUE,
+
+    /* CORREO ELECTRONICO */
+    correo VARCHAR(100),
+
+    /* CIUDAD */
+    ciudad VARCHAR(50)
+);
+GO
+
+
+
+/* =========================================================
+   TABLA 2 - EMPLEADOS
+
+   GUARDA LA INFORMACION
+   DE LOS EMPLEADOS.
+========================================================= */
+
+CREATE TABLE Empleados(
+
+    id_empleado INT PRIMARY KEY IDENTITY(1,1),
+
+    nombre VARCHAR(100) NOT NULL,
+
+    cargo VARCHAR(50),
+
+    salario DECIMAL(10,2),
+
+    telefono VARCHAR(20)
+);
+GO
+
+
+
+/* =========================================================
+   TABLA 3 - CATEGORIAS
+
+   CLASIFICA LOS PRODUCTOS.
+========================================================= */
+
+CREATE TABLE Categorias(
+
+    id_categoria INT PRIMARY KEY IDENTITY(1,1),
+
+    nombre_categoria VARCHAR(100) NOT NULL
+);
+GO
+
+
+
+/* =========================================================
+   TABLA 4 - PROVEEDORES
+
+   ALMACENA LOS PROVEEDORES
+   DE PRODUCTOS ELECTRONICOS.
+========================================================= */
+
+CREATE TABLE Proveedores(
+
+    id_proveedor INT PRIMARY KEY IDENTITY(1,1),
+
+    nombre_proveedor VARCHAR(100) NOT NULL,
+
+    telefono VARCHAR(20),
+
+    ciudad VARCHAR(50)
+);
+GO
+
+
+
+/* =========================================================
+   TABLA 5 - PRODUCTOS
+
+   CONTIENE TODOS LOS PRODUCTOS
+   DE LA TIENDA.
+========================================================= */
+
+CREATE TABLE Productos(
+
+    id_producto INT PRIMARY KEY IDENTITY(1,1),
+
+    nombre_producto VARCHAR(100) NOT NULL,
+
+    precio DECIMAL(10,2) NOT NULL,
+
+    stock INT NOT NULL,
+
+    id_categoria INT,
+
+    id_proveedor INT,
+
+    /* RESTRICCION:
+       EL STOCK NO PUEDE SER NEGATIVO */
+    CHECK(stock >= 0),
+
+    /* RESTRICCION:
+       EL PRECIO DEBE SER MAYOR A CERO */
+    CHECK(precio > 0),
+
+    /* LLAVE FORANEA HACIA CATEGORIAS */
+    FOREIGN KEY(id_categoria)
+    REFERENCES Categorias(id_categoria),
+
+    /* LLAVE FORANEA HACIA PROVEEDORES */
+    FOREIGN KEY(id_proveedor)
+    REFERENCES Proveedores(id_proveedor)
+);
+GO
+
+
+
+/* =========================================================
+   TABLA 6 - VENTAS
+
+   GUARDA LAS VENTAS
+   REALIZADAS EN LA TIENDA.
+========================================================= */
+
+CREATE TABLE Ventas(
+
+    id_venta INT PRIMARY KEY IDENTITY(1,1),
+
+    id_cliente INT,
+
+    id_empleado INT,
+
+    fecha DATE NOT NULL,
+
+    total DECIMAL(10,2),
+
+    /* LLAVE FORANEA CLIENTE */
+    FOREIGN KEY(id_cliente)
+    REFERENCES Clientes(id_cliente),
+
+    /* LLAVE FORANEA EMPLEADO */
+    FOREIGN KEY(id_empleado)
+    REFERENCES Empleados(id_empleado)
+);
+GO
+
+
+
+/* =========================================================
+   TABLA 7 - DETALLEVENTA
+
+   ESTA TABLA RELACIONA
+   PRODUCTOS CON VENTAS.
+========================================================= */
+
+CREATE TABLE DetalleVenta(
+
+    id_detalle INT PRIMARY KEY IDENTITY(1,1),
+
+    id_venta INT,
+
+    id_producto INT,
+
+    cantidad INT,
+
+    subtotal DECIMAL(10,2),
+
+    FOREIGN KEY(id_venta)
+    REFERENCES Ventas(id_venta),
+
+    FOREIGN KEY(id_producto)
+    REFERENCES Productos(id_producto)
+);
+GO
+
+
+
+/* =========================================================
+   TABLA 8 - SERVICIOS TECNICOS
+
+   GUARDA LAS REPARACIONES
+   Y SERVICIOS TECNICOS.
+========================================================= */
+
+CREATE TABLE ServiciosTecnicos(
+
+    id_servicio INT PRIMARY KEY IDENTITY(1,1),
+
+    id_cliente INT,
+
+    descripcion VARCHAR(200),
+
+    estado VARCHAR(50),
+
+    fecha_ingreso DATE,
+
+    FOREIGN KEY(id_cliente)
+    REFERENCES Clientes(id_cliente)
+);
+GO
+
+
+
+/* =========================================================
+   INSERTAR CLIENTES
+========================================================= */
+
+INSERT INTO Clientes(nombre,apellido,telefono,correo,ciudad)
+VALUES
+('Carlos','Perez','3001111111','carlos@gmail.com','Soacha'),
+('Andres','Torres','3001111112','andres@gmail.com','Bogota'),
+('Laura','Garcia','3001111113','laura@gmail.com','Cali'),
+('Miguel','Lopez','3001111114','miguel@gmail.com','Tunja'),
+('Camila','Ramirez','3001111115','camila@gmail.com','Bogota'),
+('Daniel','Moreno','3001111116','daniel@gmail.com','Medellin'),
+('Sara','Diaz','3001111117','sara@gmail.com','Cali'),
+('Felipe','Castro','3001111118','felipe@gmail.com','Soacha'),
+('Valentina','Ruiz','3001111119','vale@gmail.com','Bogota'),
+('Juan','Rodriguez','3001111120','juan@gmail.com','Tunja');
+GO
+
+
+
+/* =========================================================
+   INSERTAR EMPLEADOS
+========================================================= */
+
+INSERT INTO Empleados(nombre,cargo,salario,telefono)
+VALUES
+('Pedro Gomez','Administrador',3000000,'3201111111'),
+('Maria Torres','Vendedor',1800000,'3201111112'),
+('Kevin Ruiz','Tecnico',2200000,'3201111113'),
+('Jhon Castro','Bodega',1600000,'3201111114'),
+('Luisa Diaz','Cajera',1700000,'3201111115');
+GO
+
+
+
+/* =========================================================
+   INSERTAR CATEGORIAS
+========================================================= */
+
+INSERT INTO Categorias(nombre_categoria)
+VALUES
+('Arduino'),
+('Robotica'),
+('Sensores'),
+('Herramientas'),
+('Computadores');
+GO
+
+
+
+/* =========================================================
+   INSERTAR PROVEEDORES
+========================================================= */
+
+INSERT INTO Proveedores(nombre_proveedor,telefono,ciudad)
+VALUES
+('Electronica SAS','3101111111','Bogota'),
+('Tech Components','3101111112','Medellin'),
+('Robot Store','3101111113','Cali'),
+('Arduino Colombia','3101111114','Bogota'),
+('CompuGlobal','3101111115','Barranquilla');
+GO
+
+
+
+/* =========================================================
+   INSERTAR PRODUCTOS
+========================================================= */
+
+INSERT INTO Productos
+(nombre_producto,precio,stock,id_categoria,id_proveedor)
+VALUES
+('Arduino UNO',45000,20,1,4),
+('Arduino MEGA',85000,15,1,4),
+('Sensor Ultrasonico',15000,10,3,1),
+('Sensor Temperatura',12000,8,3,1),
+('Protoboard',10000,25,2,2),
+('Motor DC',18000,30,2,2),
+('Cautin',35000,5,4,3),
+('Multimetro',65000,7,4,3),
+('Laptop Lenovo',2500000,3,5,5),
+('Mouse Gamer',80000,12,5,5);
+GO
+
+
+
+/* =========================================================
+   INSERTAR VENTAS
+========================================================= */
+
+INSERT INTO Ventas
+(id_cliente,id_empleado,fecha,total)
+VALUES
+(1,2,'2026-05-01',90000),
+(2,2,'2026-05-02',15000),
+(3,1,'2026-05-03',2500000),
+(4,5,'2026-05-04',35000),
+(5,2,'2026-05-05',45000),
+(6,3,'2026-05-06',85000),
+(7,4,'2026-05-07',65000),
+(8,1,'2026-05-08',10000),
+(9,2,'2026-05-09',18000),
+(10,5,'2026-05-10',80000);
+GO
+
+
+
+/* =========================================================
+   INSERTAR DETALLE DE VENTAS
+========================================================= */
+
+INSERT INTO DetalleVenta
+(id_venta,id_producto,cantidad,subtotal)
+VALUES
+(1,1,2,90000),
+(2,3,1,15000),
+(3,9,1,2500000),
+(4,7,1,35000),
+(5,1,1,45000),
+(6,2,1,85000),
+(7,8,1,65000),
+(8,5,1,10000),
+(9,6,1,18000),
+(10,10,1,80000);
+GO
+
+
+
+/* =========================================================
+   INSERTAR SERVICIOS TECNICOS
+========================================================= */
+
+INSERT INTO ServiciosTecnicos
+(id_cliente,descripcion,estado,fecha_ingreso)
+VALUES
+(1,'Reparacion Arduino','Pendiente','2026-05-10'),
+(2,'Cambio pantalla laptop','Finalizado','2026-05-11'),
+(3,'Mantenimiento multimetro','Pendiente','2026-05-12'),
+(4,'Revision circuito','En proceso','2026-05-13'),
+(5,'Soldadura electronica','Finalizado','2026-05-14');
+GO
+
+
+
+/* =========================================================
+   CRUD - SELECT
+
+   CONSULTAR TODAS LAS TABLAS
+========================================================= */
+
+SELECT * FROM Clientes;
+SELECT * FROM Empleados;
+SELECT * FROM Categorias;
+SELECT * FROM Proveedores;
+SELECT * FROM Productos;
+SELECT * FROM Ventas;
+SELECT * FROM DetalleVenta;
+SELECT * FROM ServiciosTecnicos;
+GO
+
+
+
+/* =========================================================
+   CRUD - UPDATE
+
+   ACTUALIZAR EL STOCK
+   DEL PRODUCTO ARDUINO UNO
+========================================================= */
+
+UPDATE Productos
+SET stock = 50
+WHERE id_producto = 1;
+GO
+
+
+
+/* =========================================================
+   CRUD - UPDATE
+
+   ACTUALIZAR EL SALARIO
+   DEL EMPLEADO
+========================================================= */
+
+UPDATE Empleados
+SET salario = 2500000
+WHERE id_empleado = 3;
+GO
+
+
+
+/* =========================================================
+   CRUD - DELETE
+
+   ELIMINAR UN SERVICIO TECNICO
+========================================================= */
+
+DELETE FROM ServiciosTecnicos
+WHERE id_servicio = 5;
+GO
+
+
+
+/* =========================================================
+   CONSULTA 1
+
+   MOSTRAR TODOS LOS CLIENTES
+========================================================= */
+
+SELECT * FROM Clientes;
+GO
+
+
+
+/* =========================================================
+   CONSULTA 2
+
+   MOSTRAR PRODUCTOS Y SU CATEGORIA
+========================================================= */
+
+SELECT
+
+Productos.nombre_producto,
+
+Categorias.nombre_categoria
+
+FROM Productos
+
+INNER JOIN Categorias
+ON Productos.id_categoria = Categorias.id_categoria;
+GO
+
+
+
+/* =========================================================
+   CONSULTA 3
+
+   MOSTRAR VENTAS
+========================================================= */
+
+SELECT
+
+Clientes.nombre AS Cliente,
+
+Empleados.nombre AS Empleado,
+
+Ventas.fecha,
+
+Ventas.total
+
+FROM Ventas
+
+INNER JOIN Clientes
+ON Ventas.id_cliente = Clientes.id_cliente
+
+INNER JOIN Empleados
+ON Ventas.id_empleado = Empleados.id_empleado;
+GO
+
+
+
+/* =========================================================
+   CONSULTA 4
+
+   TOTAL VENDIDO POR PRODUCTO
+========================================================= */
+
+SELECT
+
+Productos.nombre_producto,
+
+SUM(DetalleVenta.subtotal) AS Total_Vendido
+
+FROM Productos
+
+INNER JOIN DetalleVenta
+ON Productos.id_producto = DetalleVenta.id_producto
+
+GROUP BY Productos.nombre_producto;
+GO
+
+
+
+/* =========================================================
+   CONSULTA 5
+
+   CLIENTES CON SERVICIO TECNICO
+========================================================= */
+
+SELECT
+
+Clientes.nombre,
+
+ServiciosTecnicos.descripcion,
+
+ServiciosTecnicos.estado
+
+FROM Clientes
+
+INNER JOIN ServiciosTecnicos
+ON Clientes.id_cliente = ServiciosTecnicos.id_cliente;
+GO
+
+
+
+/* =========================================================
+   CONSULTA 6
+
+   PRODUCTOS CON STOCK MENOR A 5
+========================================================= */
+
+SELECT *
+
+FROM Productos
+
+WHERE stock < 5;
+GO
+
+
+
+/* =========================================================
+   CONSULTA 7
+
+   DINERO VENDIDO POR EMPLEADO
+========================================================= */
+
+SELECT
+
+Empleados.nombre,
+
+SUM(Ventas.total) AS Total_Vendido
+
+FROM Empleados
+
+INNER JOIN Ventas
+ON Empleados.id_empleado = Ventas.id_empleado
+
+GROUP BY Empleados.nombre;
+GO
+
+
+
+/* =========================================================
+   CONSULTA 8
+
+   SERVICIOS PENDIENTES
+========================================================= */
+
+SELECT *
+
+FROM ServiciosTecnicos
+
+WHERE estado = 'Pendiente';
+GO
+
+
+
+/* =========================================================
+   CONSULTA AVANZADA - INNER JOIN
+========================================================= */
+
+SELECT
+
+Clientes.nombre AS Cliente,
+
+Productos.nombre_producto AS Producto,
+
+Categorias.nombre_categoria AS Categoria,
+
+Ventas.fecha,
+
+DetalleVenta.cantidad,
+
+DetalleVenta.subtotal
+
+FROM Ventas
+
+INNER JOIN Clientes
+ON Ventas.id_cliente = Clientes.id_cliente
+
+INNER JOIN DetalleVenta
+ON Ventas.id_venta = DetalleVenta.id_venta
+
+INNER JOIN Productos
+ON DetalleVenta.id_producto = Productos.id_producto
+
+INNER JOIN Categorias
+ON Productos.id_categoria = Categorias.id_categoria;
+GO
+
+
+
+/* =========================================================
+   CONSULTA AVANZADA - LEFT JOIN
+========================================================= */
+
+SELECT
+
+Clientes.nombre,
+
+Ventas.total
+
+FROM Clientes
+
+LEFT JOIN Ventas
+ON Clientes.id_cliente = Ventas.id_cliente;
+GO
+
+
+
+/* =========================================================
+   CONSULTA AVANZADA - RIGHT JOIN
+========================================================= */
+
+SELECT
+
+Productos.nombre_producto,
+
+DetalleVenta.cantidad
+
+FROM DetalleVenta
+
+RIGHT JOIN Productos
+ON DetalleVenta.id_producto = Productos.id_producto;
+GO
+
+
+
+/* =========================================================
+   CONSULTA AVANZADA - LEFT OUTER JOIN
+========================================================= */
+
+SELECT
+
+Clientes.nombre,
+
+Ventas.fecha
+
+FROM Clientes
+
+LEFT OUTER JOIN Ventas
+ON Clientes.id_cliente = Ventas.id_cliente;
+GO
+
+
+
+/* =========================================================
+   CONSULTA AVANZADA - RIGHT OUTER JOIN
+========================================================= */
+
+SELECT
+
+Productos.nombre_producto,
+
+DetalleVenta.subtotal
+
+FROM DetalleVenta
+
+RIGHT OUTER JOIN Productos
+ON DetalleVenta.id_producto = Productos.id_producto;
+GO
+
+
+
+/* =========================================================
+   CONSULTA AVANZADA - GROUP BY
+========================================================= */
+
+SELECT
+
+Categorias.nombre_categoria,
+
+COUNT(Productos.id_producto) AS Cantidad_Productos
+
+FROM Categorias
+
+INNER JOIN Productos
+ON Categorias.id_categoria = Productos.id_categoria
+
+GROUP BY Categorias.nombre_categoria;
+GO
+
+
+
+/* =========================================================
+   CONSULTA AVANZADA - HAVING
+========================================================= */
+
+SELECT
+
+Productos.nombre_producto,
+
+SUM(DetalleVenta.subtotal) AS Total
+
+FROM Productos
+
+INNER JOIN DetalleVenta
+ON Productos.id_producto = DetalleVenta.id_producto
+
+GROUP BY Productos.nombre_producto
+
+HAVING SUM(DetalleVenta.subtotal) > 50000;
+GO
+
+
+
+/* =========================================================
+   CONSULTA AVANZADA - ORDER BY
+========================================================= */
+
+SELECT *
+
+FROM Productos
+
+ORDER BY precio DESC;
+GO
+
+
+
+/* =========================================================
+   CONSULTA AVANZADA - BETWEEN
+========================================================= */
+
+SELECT *
+
+FROM Ventas
+
+WHERE fecha BETWEEN '2026-05-01'
+AND '2026-05-05';
+GO
+
+
+
+/* =========================================================
+   CONSULTA AVANZADA - LIKE
+========================================================= */
+
+SELECT *
+
+FROM Productos
+
+WHERE nombre_producto LIKE '%Arduino%';
+GO
+
+
+
+/* =========================================================
+   CONSULTA AVANZADA - IN
+========================================================= */
+
+SELECT *
+
+FROM Productos
+
+WHERE id_categoria IN (1,2,3);
+GO
+
+
+
+/* =========================================================
+   CONSULTA AVANZADA - EXISTS
+========================================================= */
+
+SELECT nombre
+
+FROM Clientes c
+
+WHERE EXISTS
+(
+    SELECT *
+    FROM Ventas v
+    WHERE v.id_cliente = c.id_cliente
+);
+GO
+
+
+
+/* =========================================================
+   CONSULTA AVANZADA - CASE
+========================================================= */
+
+SELECT
+
+nombre_producto,
+
+stock,
+
+CASE
+
+WHEN stock < 5 THEN 'STOCK BAJO'
+
+WHEN stock BETWEEN 5 AND 20 THEN 'STOCK MEDIO'
+
+ELSE 'STOCK ALTO'
+
+END AS Clasificacion
+
+FROM Productos;
+GO
+
+
+
+/* =========================================================
+   CONSULTA AVANZADA - SUBCONSULTA
+========================================================= */
+
+SELECT *
+
+FROM Productos
+
+WHERE precio >
+(
+    SELECT AVG(precio)
+    FROM Productos
+);
+GO
+
+
+
+/* =========================================================
+   CREAR VISTA
+========================================================= */
+
+CREATE VIEW vw_ventas_generales
+AS
+
+SELECT
+
+Clientes.nombre AS Cliente,
+
+Productos.nombre_producto AS Producto,
+
+Ventas.fecha,
+
+Ventas.total
+
+FROM Ventas
+
+INNER JOIN Clientes
+ON Ventas.id_cliente = Clientes.id_cliente
+
+INNER JOIN DetalleVenta
+ON Ventas.id_venta = DetalleVenta.id_venta
+
+INNER JOIN Productos
+ON DetalleVenta.id_producto = Productos.id_producto;
+GO
+
+
+
+/* =========================================================
+   CONSULTAR VISTA
+========================================================= */
+
+SELECT * FROM vw_ventas_generales;
+GO
+
+
+
+/* =========================================================
+   PROCEDIMIENTO ALMACENADO
+
+   INSERTAR VENTAS
+========================================================= */
+
+CREATE PROCEDURE sp_insertar_venta
+
+@id_cliente INT,
+@id_empleado INT,
+@fecha DATE,
+@total DECIMAL(10,2)
+
+AS
+
+BEGIN
+
+INSERT INTO Ventas
+(id_cliente,id_empleado,fecha,total)
+
+VALUES
+(@id_cliente,@id_empleado,@fecha,@total);
+
+END;
+GO
+
+
+
+/* =========================================================
+   EJECUTAR PROCEDIMIENTO
+========================================================= */
+
+EXEC sp_insertar_venta
+1,2,'2026-06-01',120000;
+GO
+
+
+
+/* =========================================================
+   TRIGGER
+
+   DESCUENTA STOCK AUTOMATICAMENTE
+========================================================= */
+
+CREATE TRIGGER trg_actualizar_stock
+
+ON DetalleVenta
+
+AFTER INSERT
+
+AS
+
+BEGIN
+
+UPDATE Productos
+
+SET stock = stock - inserted.cantidad
+
+FROM Productos
+
+INNER JOIN inserted
+ON Productos.id_producto = inserted.id_producto;
+
+END;
+GO
+
+
+
+/* =========================================================
+   CONSULTA FINAL
+
+   MOSTRAR TODO EL INVENTARIO
+========================================================= */
+
+SELECT
+
+Productos.nombre_producto,
+
+Categorias.nombre_categoria,
+
+Proveedores.nombre_proveedor,
+
+Productos.precio,
+
+Productos.stock
+
+FROM Productos
+
+INNER JOIN Categorias
+ON Productos.id_categoria = Categorias.id_categoria
+
+INNER JOIN Proveedores
+ON Productos.id_proveedor = Proveedores.id_proveedor;
+GO
+```
