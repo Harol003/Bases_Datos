@@ -1,0 +1,573 @@
+/*
+=========================================================
+CURSO PRACTICO DE STORED PROCEDURES EN SQL SERVER
+EMPRESA: POLIANIME
+AUTOR: DOCENTE DE BASES DE DATOS
+=========================================================
+
+OBJETIVO
+
+Aprender a:
+
+1. Crear una base de datos.
+2. Crear tablas.
+3. Crear relaciones.
+4. Insertar informacion.
+5. Consultar informacion.
+6. Utilizar INNER JOIN.
+7. Utilizar LEFT JOIN.
+8. Utilizar RIGHT JOIN.
+9. Crear Stored Procedures.
+10. Ejecutar Stored Procedures.
+11. Modificar Stored Procedures.
+12. Eliminar Stored Procedures.
+13. Implementar CRUD mediante Stored Procedures.
+
+=========================================================
+PASO 1 - CREAR LA BASE DE DATOS
+=========================================================
+*/
+
+CREATE DATABASE PoliAnimeDB;
+GO
+
+USE PoliAnimeDB;
+GO
+
+/*
+=========================================================
+PASO 2 - CREAR TABLA CATEGORIAS
+
+Una categoria permite clasificar los productos.
+
+Ejemplos:
+- Figuras
+- Mangas
+- Posters
+- Llaveros
+
+PRIMARY KEY:
+Identifica de forma unica cada registro.
+
+IDENTITY:
+Genera automaticamente el consecutivo.
+=========================================================
+*/
+
+CREATE TABLE Categorias
+(
+    id_categoria INT IDENTITY(1,1) PRIMARY KEY,
+
+    nombre_categoria VARCHAR(100)
+    NOT NULL
+    UNIQUE
+);
+GO
+
+/*
+=========================================================
+PASO 3 - CREAR TABLA PRODUCTOSANIME
+
+Esta tabla almacena los productos vendidos
+por PoliAnime.
+
+FOREIGN KEY:
+Relaciona cada producto con una categoria.
+=========================================================
+*/
+
+CREATE TABLE ProductosAnime
+(
+    id_producto INT IDENTITY(1,1) PRIMARY KEY,
+
+    nombre_producto VARCHAR(100)
+    NOT NULL,
+
+    precio DECIMAL(10,2)
+    NOT NULL
+    CHECK(precio > 0),
+
+    stock INT
+    DEFAULT 0
+    CHECK(stock >= 0),
+
+    id_categoria INT
+    NOT NULL,
+
+    CONSTRAINT FK_PRODUCTO_CATEGORIA
+    FOREIGN KEY(id_categoria)
+    REFERENCES Categorias(id_categoria)
+);
+GO
+
+/*
+=========================================================
+PASO 4 - CREAR TABLA CLIENTES
+
+UNIQUE:
+No permite correos repetidos.
+=========================================================
+*/
+
+CREATE TABLE Clientes
+(
+    id_cliente INT IDENTITY(1,1) PRIMARY KEY,
+
+    nombre VARCHAR(100)
+    NOT NULL,
+
+    telefono VARCHAR(20),
+
+    correo VARCHAR(100)
+    UNIQUE,
+
+    ciudad VARCHAR(100)
+    DEFAULT 'Bogota'
+);
+GO
+
+/*
+=========================================================
+PASO 5 - CREAR TABLA VENTAS
+
+Relaciona clientes y productos.
+
+Una venta pertenece a:
+- Un cliente
+- Un producto
+=========================================================
+*/
+
+CREATE TABLE Ventas
+(
+    id_venta INT IDENTITY(1,1) PRIMARY KEY,
+
+    fecha_venta DATE
+    DEFAULT GETDATE(),
+
+    cantidad INT
+    CHECK(cantidad > 0),
+
+    total DECIMAL(10,2)
+    CHECK(total > 0),
+
+    id_cliente INT,
+
+    id_producto INT,
+
+    CONSTRAINT FK_VENTA_CLIENTE
+    FOREIGN KEY(id_cliente)
+    REFERENCES Clientes(id_cliente),
+
+    CONSTRAINT FK_VENTA_PRODUCTO
+    FOREIGN KEY(id_producto)
+    REFERENCES ProductosAnime(id_producto)
+);
+GO
+
+/*
+=========================================================
+PASO 6 - INSERTAR DATOS EN CATEGORIAS
+=========================================================
+*/
+
+INSERT INTO Categorias(nombre_categoria)
+VALUES
+('Figuras'),
+('Mangas'),
+('Posters'),
+('Llaveros'),
+('Coleccionables');
+GO
+
+/*
+=========================================================
+PASO 7 - INSERTAR PRODUCTOS
+=========================================================
+*/
+
+INSERT INTO ProductosAnime
+(nombre_producto,precio,stock,id_categoria)
+VALUES
+('Figura Naruto',120000,10,1),
+('Figura Goku',150000,5,1),
+('Figura Luffy',180000,3,1),
+('Manga One Piece',45000,20,2),
+('Manga Jujutsu Kaisen',50000,15,2),
+('Poster Dragon Ball',30000,25,3),
+('Poster Naruto',28000,10,3),
+('Llavero Pikachu',15000,50,4);
+GO
+
+/*
+=========================================================
+PASO 8 - INSERTAR CLIENTES
+=========================================================
+*/
+
+INSERT INTO Clientes
+(nombre,telefono,correo,ciudad)
+VALUES
+('Harol Torres','3001111111','harol@gmail.com','Soacha'),
+('Juan Perez','3002222222','juan@gmail.com','Bogota'),
+('Maria Gomez','3003333333','maria@gmail.com','Madrid'),
+('Camilo Ruiz','3004444444','camilo@gmail.com','Mosquera'),
+('Laura Castro','3005555555','laura@gmail.com','Funza');
+GO
+
+/*
+=========================================================
+PASO 9 - INSERTAR VENTAS
+=========================================================
+*/
+
+INSERT INTO Ventas
+(cantidad,total,id_cliente,id_producto)
+VALUES
+(1,120000,1,1),
+(2,90000,2,4),
+(1,150000,3,2),
+(3,45000,1,8);
+GO
+
+/*
+=========================================================
+PASO 10 - CONSULTAS BASICAS
+=========================================================
+*/
+
+SELECT * FROM Categorias;
+SELECT * FROM ProductosAnime;
+SELECT * FROM Clientes;
+SELECT * FROM Ventas;
+GO
+
+/*
+=========================================================
+PASO 11 - INNER JOIN
+
+Muestra solamente registros relacionados.
+=========================================================
+*/
+
+SELECT
+P.nombre_producto,
+C.nombre_categoria
+FROM ProductosAnime P
+INNER JOIN Categorias C
+ON P.id_categoria = C.id_categoria;
+GO
+
+/*
+=========================================================
+PASO 12 - INNER JOIN MULTIPLE
+
+Mostrar ventas completas.
+=========================================================
+*/
+
+SELECT
+V.id_venta,
+CL.nombre,
+P.nombre_producto,
+V.cantidad,
+V.total
+FROM Ventas V
+INNER JOIN Clientes CL
+ON V.id_cliente = CL.id_cliente
+INNER JOIN ProductosAnime P
+ON V.id_producto = P.id_producto;
+GO
+
+/*
+=========================================================
+PASO 13 - LEFT JOIN
+
+Muestra todos los clientes aunque no tengan ventas.
+=========================================================
+*/
+
+SELECT
+C.nombre,
+V.id_venta
+FROM Clientes C
+LEFT JOIN Ventas V
+ON C.id_cliente = V.id_cliente;
+GO
+
+/*
+=========================================================
+PASO 14 - RIGHT JOIN
+
+Muestra todas las ventas.
+=========================================================
+*/
+
+SELECT
+C.nombre,
+V.id_venta
+FROM Clientes C
+RIGHT JOIN Ventas V
+ON C.id_cliente = V.id_cliente;
+GO
+
+/*
+=========================================================
+PASO 15 - STORED PROCEDURE SIN PARAMETROS
+
+Un Stored Procedure es un conjunto de
+instrucciones almacenadas dentro de SQL Server.
+
+Este procedimiento muestra todos los clientes.
+=========================================================
+*/
+
+CREATE PROCEDURE sp_mostrar_clientes
+AS
+BEGIN
+
+    SELECT *
+    FROM Clientes;
+
+END;
+GO
+
+EXEC sp_mostrar_clientes;
+GO
+
+/*
+=========================================================
+PASO 16 - STORED PROCEDURE CON PARAMETRO
+
+@id recibe un valor enviado por el usuario.
+=========================================================
+*/
+
+CREATE PROCEDURE sp_buscar_cliente
+    @id INT
+AS
+BEGIN
+
+    SELECT *
+    FROM Clientes
+    WHERE id_cliente = @id;
+
+END;
+GO
+
+EXEC sp_buscar_cliente 1;
+GO
+
+/*
+=========================================================
+PASO 17 - STORED PROCEDURE CON VARIOS PARAMETROS
+=========================================================
+*/
+
+CREATE PROCEDURE sp_buscar_producto
+    @precio DECIMAL(10,2),
+    @stock INT
+AS
+BEGIN
+
+    SELECT *
+    FROM ProductosAnime
+    WHERE precio >= @precio
+    AND stock >= @stock;
+
+END;
+GO
+
+EXEC sp_buscar_producto 100000,5;
+GO
+
+/*
+=========================================================
+PASO 18 - STORED PROCEDURE CON VALOR POR DEFECTO
+=========================================================
+*/
+
+CREATE PROCEDURE sp_stock_bajo
+    @stock INT = 5
+AS
+BEGIN
+
+    SELECT *
+    FROM ProductosAnime
+    WHERE stock <= @stock;
+
+END;
+GO
+
+EXEC sp_stock_bajo;
+GO
+
+EXEC sp_stock_bajo 20;
+GO
+
+/*
+=========================================================
+PASO 19 - CRUD MEDIANTE STORED PROCEDURES
+
+CREATE
+=========================================================
+*/
+
+CREATE PROCEDURE sp_insertar_cliente
+
+    @nombre VARCHAR(100),
+    @telefono VARCHAR(20),
+    @correo VARCHAR(100),
+    @ciudad VARCHAR(100)
+
+AS
+BEGIN
+
+    INSERT INTO Clientes
+    (
+        nombre,
+        telefono,
+        correo,
+        ciudad
+    )
+    VALUES
+    (
+        @nombre,
+        @telefono,
+        @correo,
+        @ciudad
+    );
+
+END;
+GO
+
+EXEC sp_insertar_cliente
+'Pedro Ramirez',
+'3111111111',
+'pedro@gmail.com',
+'Bogota';
+GO
+
+/*
+=========================================================
+READ
+=========================================================
+*/
+
+CREATE PROCEDURE sp_consultar_clientes
+AS
+BEGIN
+
+    SELECT *
+    FROM Clientes;
+
+END;
+GO
+
+EXEC sp_consultar_clientes;
+GO
+
+/*
+=========================================================
+UPDATE
+=========================================================
+*/
+
+CREATE PROCEDURE sp_actualizar_cliente
+
+    @id INT,
+    @telefono VARCHAR(20)
+
+AS
+BEGIN
+
+    UPDATE Clientes
+
+    SET telefono = @telefono
+
+    WHERE id_cliente = @id;
+
+END;
+GO
+
+EXEC sp_actualizar_cliente
+1,
+'3999999999';
+GO
+
+/*
+=========================================================
+DELETE
+=========================================================
+*/
+
+CREATE PROCEDURE sp_eliminar_cliente
+
+    @id INT
+
+AS
+BEGIN
+
+    DELETE FROM Clientes
+    WHERE id_cliente = @id;
+
+END;
+GO
+
+/*
+=========================================================
+PASO 20 - MODIFICAR UN PROCEDIMIENTO
+
+ALTER PROCEDURE
+=========================================================
+*/
+
+ALTER PROCEDURE sp_mostrar_clientes
+AS
+BEGIN
+
+    SELECT
+    id_cliente,
+    nombre,
+    ciudad
+    FROM Clientes;
+
+END;
+GO
+
+EXEC sp_mostrar_clientes;
+GO
+
+/*
+=========================================================
+PASO 21 - ELIMINAR PROCEDIMIENTO
+
+DROP PROCEDURE
+=========================================================
+*/
+
+DROP PROCEDURE sp_stock_bajo;
+GO
+
+/*
+=========================================================
+PASO 22 - CONSULTAS DE REPORTE
+=========================================================
+*/
+
+SELECT COUNT(*) AS total_clientes
+FROM Clientes;
+
+SELECT COUNT(*) AS total_productos
+FROM ProductosAnime;
+
+SELECT AVG(precio) AS promedio_precios
+FROM ProductosAnime;
+
+SELECT SUM(total) AS total_vendido
+FROM Ventas;
+
+SELECT TOP 1 *
+FROM ProductosAnime
+ORDER BY precio DESC;
+GO

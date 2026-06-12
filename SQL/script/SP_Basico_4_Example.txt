@@ -1,0 +1,746 @@
+/*====================================================================
+CURSO COMPLETO DE STORED PROCEDURES (SP) EN SQL SERVER
+GUIA DE ESTUDIO Y PRACTICA
+
+EMPRESA: POLIANIME
+
+OBJETIVOS
+
+1. Crear Stored Procedures.
+2. Ejecutar Stored Procedures.
+3. Utilizar parametros.
+4. Utilizar parametros OUTPUT.
+5. Utilizar valores por defecto.
+6. Realizar CRUD mediante SP.
+7. Modificar SP.
+8. Eliminar SP.
+9. Consultar SP existentes.
+10. Manejar errores con TRY CATCH.
+11. Utilizar transacciones.
+12. Utilizar valores de retorno.
+13. Gestionar permisos.
+
+====================================================================*/
+
+
+/*====================================================================
+PASO 1
+CREAR BASE DE DATOS
+====================================================================*/
+
+CREATE DATABASE PoliAnimeDB;
+GO
+
+USE PoliAnimeDB;
+GO
+
+
+/*====================================================================
+PASO 2
+CREAR TABLA CLIENTES
+====================================================================*/
+
+CREATE TABLE Clientes
+(
+    id_cliente INT IDENTITY(1,1) PRIMARY KEY,
+
+    nombre VARCHAR(100)
+    NOT NULL,
+
+    telefono VARCHAR(20),
+
+    correo VARCHAR(100)
+    UNIQUE,
+
+    ciudad VARCHAR(100)
+);
+GO
+
+
+/*====================================================================
+PASO 3
+CREAR TABLA PRODUCTOS
+====================================================================*/
+
+CREATE TABLE Productos
+(
+    id_producto INT IDENTITY(1,1) PRIMARY KEY,
+
+    nombre_producto VARCHAR(100)
+    NOT NULL,
+
+    precio DECIMAL(10,2)
+    CHECK(precio > 0),
+
+    stock INT
+    CHECK(stock >= 0)
+);
+GO
+
+
+/*====================================================================
+PASO 4
+INSERTAR DATOS DE PRUEBA
+====================================================================*/
+
+INSERT INTO Clientes
+(nombre,telefono,correo,ciudad)
+VALUES
+('Harol Torres','3001111111','harol@gmail.com','Soacha'),
+('Juan Perez','3002222222','juan@gmail.com','Bogota'),
+('Maria Gomez','3003333333','maria@gmail.com','Madrid');
+GO
+
+
+INSERT INTO Productos
+(nombre_producto,precio,stock)
+VALUES
+('Figura Naruto',120000,10),
+('Figura Goku',150000,5),
+('Poster Dragon Ball',30000,20),
+('Manga One Piece',45000,15);
+GO
+
+
+/*====================================================================
+PASO 5
+CONSULTAR DATOS
+====================================================================*/
+
+SELECT * FROM Clientes;
+GO
+
+SELECT * FROM Productos;
+GO
+
+
+/*====================================================================
+SP 1
+STORED PROCEDURE BASICO
+SIN PARAMETROS
+====================================================================*/
+
+CREATE PROCEDURE sp_saludo
+AS
+BEGIN
+
+    SELECT 'Bienvenido al sistema PoliAnime';
+
+END;
+GO
+
+
+/*====================================================================
+EJECUTAR SP BASICO
+====================================================================*/
+
+EXEC sp_saludo;
+GO
+
+
+/*====================================================================
+SP 2
+SP CON PARAMETRO DE ENTRADA
+====================================================================*/
+
+CREATE PROCEDURE sp_buscar_cliente
+
+    @id INT
+
+AS
+BEGIN
+
+    SELECT *
+
+    FROM Clientes
+
+    WHERE id_cliente = @id;
+
+END;
+GO
+
+
+/*====================================================================
+EJECUTAR SP CON PARAMETRO
+====================================================================*/
+
+EXEC sp_buscar_cliente 1;
+GO
+
+
+/*====================================================================
+SP 3
+SP CON VARIOS PARAMETROS
+====================================================================*/
+
+CREATE PROCEDURE sp_buscar_producto
+
+    @precio DECIMAL(10,2),
+    @stock INT
+
+AS
+BEGIN
+
+    SELECT *
+
+    FROM Productos
+
+    WHERE precio >= @precio
+    AND stock >= @stock;
+
+END;
+GO
+
+
+/*====================================================================
+EJECUTAR SP CON VARIOS PARAMETROS
+====================================================================*/
+
+EXEC sp_buscar_producto
+50000,
+5;
+GO
+
+
+/*====================================================================
+SP 4
+PARAMETRO CON VALOR POR DEFECTO
+====================================================================*/
+
+CREATE PROCEDURE sp_stock_bajo
+
+    @stock INT = 5
+
+AS
+BEGIN
+
+    SELECT *
+
+    FROM Productos
+
+    WHERE stock <= @stock;
+
+END;
+GO
+
+
+/*====================================================================
+EJECUTAR SP UTILIZANDO VALOR POR DEFECTO
+====================================================================*/
+
+EXEC sp_stock_bajo;
+GO
+
+
+/*====================================================================
+EJECUTAR SP ENVIANDO VALOR
+====================================================================*/
+
+EXEC sp_stock_bajo 15;
+GO
+
+
+/*====================================================================
+SP 5
+PARAMETRO OUTPUT
+
+DEVUELVE UN RESULTADO HACIA UNA VARIABLE
+====================================================================*/
+
+CREATE PROCEDURE sp_contar_clientes
+
+    @cantidad INT OUTPUT
+
+AS
+BEGIN
+
+    SELECT
+
+    @cantidad = COUNT(*)
+
+    FROM Clientes;
+
+END;
+GO
+
+
+/*====================================================================
+EJECUTAR PARAMETRO OUTPUT
+====================================================================*/
+
+DECLARE @total INT;
+
+EXEC sp_contar_clientes
+@total OUTPUT;
+
+SELECT @total AS total_clientes;
+GO
+
+
+/*====================================================================
+CRUD MEDIANTE STORED PROCEDURES
+
+CREATE
+====================================================================*/
+
+CREATE PROCEDURE sp_insertar_cliente
+
+    @nombre VARCHAR(100),
+    @telefono VARCHAR(20),
+    @correo VARCHAR(100),
+    @ciudad VARCHAR(100)
+
+AS
+BEGIN
+
+    INSERT INTO Clientes
+    (
+        nombre,
+        telefono,
+        correo,
+        ciudad
+    )
+
+    VALUES
+    (
+        @nombre,
+        @telefono,
+        @correo,
+        @ciudad
+    );
+
+END;
+GO
+
+
+/*====================================================================
+EJECUTAR CREATE
+====================================================================*/
+
+EXEC sp_insertar_cliente
+
+'Pedro Ramirez',
+'3111111111',
+'pedro@gmail.com',
+'Bogota';
+GO
+
+
+/*====================================================================
+CRUD
+
+READ
+====================================================================*/
+
+CREATE PROCEDURE sp_consultar_clientes
+AS
+BEGIN
+
+    SELECT *
+
+    FROM Clientes;
+
+END;
+GO
+
+
+/*====================================================================
+EJECUTAR READ
+====================================================================*/
+
+EXEC sp_consultar_clientes;
+GO
+
+
+/*====================================================================
+CRUD
+
+UPDATE
+====================================================================*/
+
+CREATE PROCEDURE sp_actualizar_cliente
+
+    @id INT,
+    @telefono VARCHAR(20)
+
+AS
+BEGIN
+
+    UPDATE Clientes
+
+    SET telefono = @telefono
+
+    WHERE id_cliente = @id;
+
+END;
+GO
+
+
+/*====================================================================
+EJECUTAR UPDATE
+====================================================================*/
+
+EXEC sp_actualizar_cliente
+
+1,
+'3999999999';
+GO
+
+
+/*====================================================================
+VERIFICAR UPDATE
+====================================================================*/
+
+SELECT *
+FROM Clientes;
+GO
+
+
+/*====================================================================
+CRUD
+
+DELETE
+====================================================================*/
+
+CREATE PROCEDURE sp_eliminar_cliente
+
+    @id INT
+
+AS
+BEGIN
+
+    DELETE FROM Clientes
+
+    WHERE id_cliente = @id;
+
+END;
+GO
+
+
+/*====================================================================
+EJECUTAR DELETE
+====================================================================*/
+
+EXEC sp_eliminar_cliente 4;
+GO
+
+
+/*====================================================================
+VERIFICAR DELETE
+====================================================================*/
+
+SELECT *
+FROM Clientes;
+GO
+
+
+/*====================================================================
+SP 6
+MODIFICAR PROCEDIMIENTO
+
+ALTER PROCEDURE
+====================================================================*/
+
+ALTER PROCEDURE sp_consultar_clientes
+AS
+BEGIN
+
+    SELECT
+
+        id_cliente,
+        nombre,
+        ciudad
+
+    FROM Clientes;
+
+END;
+GO
+
+
+/*====================================================================
+EJECUTAR PROCEDIMIENTO MODIFICADO
+====================================================================*/
+
+EXEC sp_consultar_clientes;
+GO
+
+
+/*====================================================================
+SP 7
+VER EL CODIGO DE UN PROCEDIMIENTO
+====================================================================*/
+
+EXEC sp_helptext
+'sp_consultar_clientes';
+GO
+
+
+/*====================================================================
+SP 8
+LISTAR TODOS LOS PROCEDIMIENTOS
+====================================================================*/
+
+SELECT
+
+name
+
+FROM sys.procedures
+
+ORDER BY name;
+GO
+
+
+/*====================================================================
+SP 9
+MANEJO DE ERRORES CON TRY CATCH
+====================================================================*/
+
+CREATE PROCEDURE sp_dividir
+
+    @numero1 INT,
+    @numero2 INT
+
+AS
+BEGIN
+
+    BEGIN TRY
+
+        SELECT
+
+        @numero1 / @numero2
+
+        AS resultado;
+
+    END TRY
+
+    BEGIN CATCH
+
+        SELECT
+
+        ERROR_NUMBER() AS numero_error,
+
+        ERROR_MESSAGE() AS mensaje_error;
+
+    END CATCH
+
+END;
+GO
+
+
+/*====================================================================
+EJECUTAR SP CON ERROR
+====================================================================*/
+
+EXEC sp_dividir
+10,
+0;
+GO
+
+
+/*====================================================================
+SP 10
+TRANSACCIONES
+====================================================================*/
+
+CREATE TABLE CuentaA
+(
+    saldo DECIMAL(10,2)
+);
+GO
+
+CREATE TABLE CuentaB
+(
+    saldo DECIMAL(10,2)
+);
+GO
+
+
+INSERT INTO CuentaA VALUES(1000000);
+INSERT INTO CuentaB VALUES(500000);
+GO
+
+
+CREATE PROCEDURE sp_transferencia
+
+    @valor DECIMAL(10,2)
+
+AS
+BEGIN
+
+    BEGIN TRY
+
+        BEGIN TRAN;
+
+        UPDATE CuentaA
+        SET saldo = saldo - @valor;
+
+        UPDATE CuentaB
+        SET saldo = saldo + @valor;
+
+        COMMIT TRAN;
+
+    END TRY
+
+    BEGIN CATCH
+
+        ROLLBACK TRAN;
+
+    END CATCH
+
+END;
+GO
+
+
+/*====================================================================
+EJECUTAR TRANSFERENCIA
+====================================================================*/
+
+EXEC sp_transferencia 100000;
+GO
+
+
+/*====================================================================
+VERIFICAR SALDOS
+====================================================================*/
+
+SELECT * FROM CuentaA;
+GO
+
+SELECT * FROM CuentaB;
+GO
+
+
+/*====================================================================
+SP 11
+VALOR DE RETORNO
+====================================================================*/
+
+CREATE PROCEDURE sp_sumar
+
+    @numero1 INT,
+    @numero2 INT
+
+AS
+BEGIN
+
+    RETURN @numero1 + @numero2;
+
+END;
+GO
+
+
+/*====================================================================
+EJECUTAR VALOR DE RETORNO
+====================================================================*/
+
+DECLARE @resultado INT;
+
+EXEC @resultado =
+sp_sumar
+10,
+20;
+
+SELECT @resultado AS resultado;
+GO
+
+
+/*====================================================================
+SP 12
+PARAMETROS NOMBRADOS
+====================================================================*/
+
+EXEC sp_buscar_producto
+
+    @precio = 50000,
+    @stock = 5;
+GO
+
+
+/*====================================================================
+SP 13
+PARAMETROS OPCIONALES
+====================================================================*/
+
+CREATE PROCEDURE sp_clientes_ciudad
+
+    @ciudad VARCHAR(100) = NULL
+
+AS
+BEGIN
+
+    SELECT *
+
+    FROM Clientes
+
+    WHERE ciudad = @ciudad
+    OR @ciudad IS NULL;
+
+END;
+GO
+
+
+/*====================================================================
+EJECUTAR SIN PARAMETRO
+====================================================================*/
+
+EXEC sp_clientes_ciudad;
+GO
+
+
+/*====================================================================
+EJECUTAR CON PARAMETRO
+====================================================================*/
+
+EXEC sp_clientes_ciudad
+'Bogota';
+GO
+
+
+/*====================================================================
+SP 14
+ELIMINAR PROCEDIMIENTO
+====================================================================*/
+
+DROP PROCEDURE sp_stock_bajo;
+GO
+
+
+/*====================================================================
+VERIFICAR PROCEDIMIENTOS EXISTENTES
+====================================================================*/
+
+SELECT
+
+name
+
+FROM sys.procedures
+
+ORDER BY name;
+GO
+
+
+/*====================================================================
+RESUMEN
+
+CREATE PROCEDURE = CREAR
+
+EXEC = EJECUTAR
+
+ALTER PROCEDURE = MODIFICAR
+
+DROP PROCEDURE = ELIMINAR
+
+OUTPUT = DEVOLVER DATOS
+
+TRY CATCH = MANEJO DE ERRORES
+
+BEGIN TRAN = INICIAR TRANSACCION
+
+COMMIT = CONFIRMAR
+
+ROLLBACK = DESHACER
+
+====================================================================*/
+
+PRINT 'CURSO COMPLETO DE STORED PROCEDURES FINALIZADO';
+GO

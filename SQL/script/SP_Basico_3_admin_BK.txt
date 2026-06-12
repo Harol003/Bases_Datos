@@ -1,0 +1,588 @@
+/*====================================================================
+CURSO PRACTICO DE MANTENIMIENTO Y RESPALDO DE BASES DE DATOS
+SQL SERVER
+
+EMPRESAS:
+- POLIANIME
+- MODATECH
+
+OBJETIVOS
+
+1. Consultar bases de datos.
+2. Realizar Full Backup.
+3. Realizar Differential Backup.
+4. Realizar Transaction Log Backup.
+5. Realizar Copy Only Backup.
+6. Consultar informacion de los respaldos.
+7. Consultar historial de respaldos.
+8. Restaurar bases de datos.
+9. Simular un desastre.
+10. Diseñar un plan de mantenimiento.
+
+NOTA
+
+Antes de iniciar cree la carpeta:
+
+C:\BackupsSQL
+
+Todos los archivos de respaldo se almacenaran alli.
+
+====================================================================*/
+
+
+/*====================================================================
+PASO 1
+CONSULTAR LAS BASES DE DATOS EXISTENTES
+====================================================================*/
+
+SELECT *
+FROM sys.databases;
+GO
+
+
+/*====================================================================
+PASO 2
+VERIFICAR QUE EXISTAN POLIANIMEDB Y MODATECHDB
+====================================================================*/
+
+SELECT name
+FROM sys.databases
+WHERE name IN ('PoliAnimeDB','ModaTechDB');
+GO
+
+
+/*====================================================================
+PASO 3
+FULL BACKUP DE POLIANIME
+
+UN FULL BACKUP CREA UNA COPIA COMPLETA DE TODA LA BASE
+DE DATOS.
+
+INCLUYE:
+
+- TABLAS
+- DATOS
+- VISTAS
+- PROCEDIMIENTOS ALMACENADOS
+- FUNCIONES
+- USUARIOS
+- RELACIONES
+
+====================================================================*/
+
+BACKUP DATABASE PoliAnimeDB
+
+TO DISK='C:\BackupsSQL\PoliAnime_Full.bak'
+
+WITH
+
+FORMAT,
+
+INIT,
+
+NAME='Backup Completo PoliAnime',
+
+DESCRIPTION='Respaldo completo de PoliAnimeDB',
+
+STATS=10;
+GO
+
+
+/*====================================================================
+PASO 4
+FULL BACKUP DE MODATECH
+====================================================================*/
+
+BACKUP DATABASE ModaTechDB
+
+TO DISK='C:\BackupsSQL\ModaTech_Full.bak'
+
+WITH
+
+FORMAT,
+
+INIT,
+
+NAME='Backup Completo ModaTech',
+
+DESCRIPTION='Respaldo completo de ModaTechDB',
+
+STATS=10;
+GO
+
+
+/*====================================================================
+PASO 5
+VERIFICAR EL TAMAÑO DE LAS BASES DE DATOS
+
+ESTA CONSULTA PERMITE IDENTIFICAR EL TAMAÑO APROXIMADO
+DE LAS BASES EN EL SERVIDOR.
+====================================================================*/
+
+EXEC sp_helpdb 'PoliAnimeDB';
+GO
+
+EXEC sp_helpdb 'ModaTechDB';
+GO
+
+
+/*====================================================================
+PASO 6
+SIMULAR CAMBIOS EN POLIANIME
+
+SE INSERTAN REGISTROS NUEVOS PARA GENERAR CAMBIOS
+DESPUES DEL FULL BACKUP.
+====================================================================*/
+
+USE PoliAnimeDB;
+GO
+
+INSERT INTO Clientes
+(nombre,telefono,correo,ciudad)
+VALUES
+('Naruto Uzumaki','3000000001','naruto@anime.com','Bogota'),
+('Goku Saiyajin','3000000002','goku@anime.com','Soacha');
+GO
+
+
+/*====================================================================
+PASO 7
+CONSULTAR LOS NUEVOS REGISTROS
+====================================================================*/
+
+SELECT *
+FROM Clientes;
+GO
+
+
+/*====================================================================
+PASO 8
+CREAR DIFFERENTIAL BACKUP
+
+UN DIFFERENTIAL BACKUP ALMACENA LOS CAMBIOS REALIZADOS
+DESDE EL ULTIMO FULL BACKUP.
+====================================================================*/
+
+BACKUP DATABASE PoliAnimeDB
+
+TO DISK='C:\BackupsSQL\PoliAnime_Diferencial.bak'
+
+WITH
+
+DIFFERENTIAL,
+
+NAME='Backup Diferencial PoliAnime',
+
+DESCRIPTION='Cambios realizados despues del Full Backup',
+
+STATS=10;
+GO
+
+
+/*====================================================================
+PASO 9
+REALIZAR NUEVOS CAMBIOS PARA EL LOG BACKUP
+====================================================================*/
+
+INSERT INTO Clientes
+(nombre,telefono,correo,ciudad)
+VALUES
+('Luffy Monkey D','3000000003','luffy@anime.com','Bogota');
+
+GO
+
+
+/*====================================================================
+PASO 10
+VERIFICAR EL MODELO DE RECUPERACION
+
+UN LOG BACKUP REQUIERE EL MODO FULL.
+====================================================================*/
+
+SELECT
+
+name,
+recovery_model_desc
+
+FROM sys.databases
+
+WHERE name='PoliAnimeDB';
+GO
+
+
+/*====================================================================
+PASO 11
+CAMBIAR A RECOVERY FULL
+
+ESTE PASO PERMITE REALIZAR LOG BACKUPS.
+====================================================================*/
+
+ALTER DATABASE PoliAnimeDB
+
+SET RECOVERY FULL;
+GO
+
+
+/*====================================================================
+PASO 12
+REALIZAR UN NUEVO FULL BACKUP
+
+ES RECOMENDABLE REALIZARLO DESPUES DEL CAMBIO DE
+MODELO DE RECUPERACION.
+====================================================================*/
+
+BACKUP DATABASE PoliAnimeDB
+
+TO DISK='C:\BackupsSQL\PoliAnime_Full_Recovery.bak'
+
+WITH
+
+INIT,
+
+NAME='Full Backup Recovery Model Full',
+
+STATS=10;
+GO
+
+
+/*====================================================================
+PASO 13
+REALIZAR NUEVOS CAMBIOS
+====================================================================*/
+
+INSERT INTO Clientes
+(nombre,telefono,correo,ciudad)
+VALUES
+('Ichigo Kurosaki','3000000004','ichigo@anime.com','Mosquera');
+
+GO
+
+
+/*====================================================================
+PASO 14
+TRANSACTION LOG BACKUP
+
+ALMACENA LAS TRANSACCIONES DEL ARCHIVO LOG.
+====================================================================*/
+
+BACKUP LOG PoliAnimeDB
+
+TO DISK='C:\BackupsSQL\PoliAnime_Log.trn'
+
+WITH
+
+NAME='Backup Log PoliAnime',
+
+DESCRIPTION='Respaldo del archivo de transacciones',
+
+STATS=10;
+GO
+
+
+/*====================================================================
+PASO 15
+COPY ONLY BACKUP
+
+NO ALTERA LA CADENA NORMAL DE RESPALDOS.
+====================================================================*/
+
+BACKUP DATABASE PoliAnimeDB
+
+TO DISK='C:\BackupsSQL\PoliAnime_CopyOnly.bak'
+
+WITH
+
+COPY_ONLY,
+
+NAME='Backup Independiente PoliAnime',
+
+STATS=10;
+GO
+
+
+/*====================================================================
+PASO 16
+CONSULTAR INFORMACION DEL BACKUP
+
+MUESTRA INFORMACION INTERNA DEL ARCHIVO.
+====================================================================*/
+
+RESTORE HEADERONLY
+
+FROM DISK='C:\BackupsSQL\PoliAnime_Full.bak';
+GO
+
+
+/*====================================================================
+PASO 17
+CONSULTAR LOS ARCHIVOS CONTENIDOS EN EL BACKUP
+====================================================================*/
+
+RESTORE FILELISTONLY
+
+FROM DISK='C:\BackupsSQL\PoliAnime_Full.bak';
+GO
+
+
+/*====================================================================
+PASO 18
+CONSULTAR HISTORIAL DE RESPALDOS
+
+TYPE
+
+D = FULL
+I = DIFFERENTIAL
+L = LOG
+F = FILE
+
+====================================================================*/
+
+SELECT
+
+database_name,
+backup_start_date,
+backup_finish_date,
+type,
+name
+
+FROM msdb.dbo.backupset
+
+ORDER BY backup_finish_date DESC;
+GO
+
+
+/*====================================================================
+PASO 19
+CONSULTAR RESPALDOS DE POLIANIME
+====================================================================*/
+
+SELECT
+
+database_name,
+backup_start_date,
+backup_finish_date,
+type,
+name
+
+FROM msdb.dbo.backupset
+
+WHERE database_name='PoliAnimeDB'
+
+ORDER BY backup_finish_date DESC;
+GO
+
+
+/*====================================================================
+PASO 20
+CONSULTAR RESPALDOS DE MODATECH
+====================================================================*/
+
+SELECT
+
+database_name,
+backup_start_date,
+backup_finish_date,
+type,
+name
+
+FROM msdb.dbo.backupset
+
+WHERE database_name='ModaTechDB'
+
+ORDER BY backup_finish_date DESC;
+GO
+
+
+/*====================================================================
+PASO 21
+SIMULACION DE DESASTRE
+
+ANTES DE ELIMINAR LA BASE DE DATOS ES NECESARIO
+CERRAR TODAS LAS CONEXIONES.
+
+ESTE PASO DEBE EJECUTARSE SOLO SI EL DOCENTE DESEA
+SIMULAR LA PERDIDA DE LA BASE DE DATOS.
+
+COMENTADO POR SEGURIDAD.
+====================================================================*/
+
+/*
+
+USE master;
+GO
+
+ALTER DATABASE PoliAnimeDB
+SET SINGLE_USER
+WITH ROLLBACK IMMEDIATE;
+GO
+
+DROP DATABASE PoliAnimeDB;
+GO
+
+*/
+
+
+/*====================================================================
+PASO 22
+RESTAURAR DESDE FULL BACKUP
+
+ESTE PASO SE EJECUTA DESPUES DE UNA PERDIDA TOTAL.
+====================================================================*/
+
+/*
+
+RESTORE DATABASE PoliAnimeDB
+
+FROM DISK='C:\BackupsSQL\PoliAnime_Full.bak'
+
+WITH
+
+REPLACE,
+
+RECOVERY;
+GO
+
+*/
+
+
+/*====================================================================
+PASO 23
+RESTAURAR FULL + DIFFERENTIAL
+
+PRIMERO EL FULL
+
+NORECOVERY DEJA LA BASE PREPARADA PARA RECIBIR
+RESPALDOS ADICIONALES.
+====================================================================*/
+
+/*
+
+RESTORE DATABASE PoliAnimeDB
+
+FROM DISK='C:\BackupsSQL\PoliAnime_Full.bak'
+
+WITH NORECOVERY;
+GO
+
+*/
+
+
+/*====================================================================
+PASO 24
+RESTAURAR DIFFERENTIAL
+====================================================================*/
+
+/*
+
+RESTORE DATABASE PoliAnimeDB
+
+FROM DISK='C:\BackupsSQL\PoliAnime_Diferencial.bak'
+
+WITH RECOVERY;
+GO
+
+*/
+
+
+/*====================================================================
+PASO 25
+RESTAURAR FULL + LOG
+
+PRIMER PASO
+====================================================================*/
+
+/*
+
+RESTORE DATABASE PoliAnimeDB
+
+FROM DISK='C:\BackupsSQL\PoliAnime_Full_Recovery.bak'
+
+WITH NORECOVERY;
+GO
+
+*/
+
+
+/*====================================================================
+PASO 26
+SEGUNDO PASO
+RESTAURAR LOG BACKUP
+====================================================================*/
+
+/*
+
+RESTORE LOG PoliAnimeDB
+
+FROM DISK='C:\BackupsSQL\PoliAnime_Log.trn'
+
+WITH RECOVERY;
+GO
+
+*/
+
+
+/*====================================================================
+PASO 27
+CONSULTAR EL ESTADO DE LAS BASES
+====================================================================*/
+
+SELECT
+
+name,
+state_desc,
+recovery_model_desc
+
+FROM sys.databases
+
+WHERE name IN ('PoliAnimeDB','ModaTechDB');
+GO
+
+
+/*====================================================================
+PASO 28
+CONSULTAR EL ESPACIO UTILIZADO POR LOS ARCHIVOS
+
+ESTA CONSULTA ES UTIL PARA EL MANTENIMIENTO.
+====================================================================*/
+
+USE PoliAnimeDB;
+GO
+
+EXEC sp_spaceused;
+GO
+
+
+/*====================================================================
+PASO 29
+CONSULTAR EL TAMAÑO DE LAS TABLAS
+
+UTIL PARA IDENTIFICAR CRECIMIENTO.
+====================================================================*/
+
+EXEC sp_MSforeachtable 'EXEC sp_spaceused ''?'' ';
+GO
+
+
+/*====================================================================
+PASO 30
+PLAN DE MANTENIMIENTO RECOMENDADO
+
+FULL BACKUP
+DOMINGO 11:00 PM
+
+DIFFERENTIAL BACKUP
+TODOS LOS DIAS 10:00 PM
+
+LOG BACKUP
+CADA 30 MINUTOS
+
+VERIFICACION DE RESPALDOS
+VIERNES 6:00 PM
+
+PRUEBA DE RESTAURACION
+PRIMER DOMINGO DE CADA MES
+
+====================================================================*/
+
+PRINT 'CURSO DE BACKUPS Y RESTAURACION FINALIZADO';
+GO

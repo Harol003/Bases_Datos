@@ -1,0 +1,498 @@
+/*
+=========================================================
+CURSO PRACTICO SQL SERVER
+EMPRESA: MODATECH
+SISTEMA DE VENTAS DE ROPA
+
+TEMAS
+
+1. CREATE DATABASE
+2. CREATE TABLE
+3. PRIMARY KEY
+4. FOREIGN KEY
+5. CHECK
+6. UNIQUE
+7. DEFAULT
+8. INSERT
+9. SELECT
+10. INNER JOIN
+11. LEFT JOIN
+12. RIGHT JOIN
+13. GROUP BY
+14. STORED PROCEDURES
+15. CRUD
+=========================================================
+*/
+
+CREATE DATABASE ModaTechDB;
+GO
+
+USE ModaTechDB;
+GO
+
+/*
+=========================================================
+TABLA CATEGORIAS
+=========================================================
+*/
+
+CREATE TABLE Categorias
+(
+    id_categoria INT IDENTITY(1,1) PRIMARY KEY,
+
+    nombre_categoria VARCHAR(100)
+    NOT NULL
+    UNIQUE
+);
+GO
+
+/*
+=========================================================
+TABLA PRODUCTOS
+=========================================================
+*/
+
+CREATE TABLE Productos
+(
+    id_producto INT IDENTITY(1,1) PRIMARY KEY,
+
+    nombre_producto VARCHAR(100)
+    NOT NULL,
+
+    talla VARCHAR(10)
+    NOT NULL,
+
+    color VARCHAR(50)
+    NOT NULL,
+
+    precio DECIMAL(10,2)
+    CHECK(precio > 0),
+
+    stock INT
+    DEFAULT 0
+    CHECK(stock >= 0),
+
+    id_categoria INT,
+
+    CONSTRAINT FK_PRODUCTOS_CATEGORIAS
+    FOREIGN KEY(id_categoria)
+    REFERENCES Categorias(id_categoria)
+);
+GO
+
+/*
+=========================================================
+TABLA CLIENTES
+=========================================================
+*/
+
+CREATE TABLE Clientes
+(
+    id_cliente INT IDENTITY(1,1) PRIMARY KEY,
+
+    nombre VARCHAR(100)
+    NOT NULL,
+
+    telefono VARCHAR(20),
+
+    correo VARCHAR(100)
+    UNIQUE,
+
+    ciudad VARCHAR(100)
+);
+GO
+
+/*
+=========================================================
+TABLA EMPLEADOS
+=========================================================
+*/
+
+CREATE TABLE Empleados
+(
+    id_empleado INT IDENTITY(1,1) PRIMARY KEY,
+
+    nombre VARCHAR(100)
+    NOT NULL,
+
+    cargo VARCHAR(50),
+
+    salario DECIMAL(10,2)
+    CHECK(salario > 0)
+);
+GO
+
+/*
+=========================================================
+TABLA VENTAS
+=========================================================
+*/
+
+CREATE TABLE Ventas
+(
+    id_venta INT IDENTITY(1,1) PRIMARY KEY,
+
+    fecha_venta DATE
+    DEFAULT GETDATE(),
+
+    total DECIMAL(10,2),
+
+    id_cliente INT,
+
+    id_empleado INT,
+
+    CONSTRAINT FK_VENTAS_CLIENTES
+    FOREIGN KEY(id_cliente)
+    REFERENCES Clientes(id_cliente),
+
+    CONSTRAINT FK_VENTAS_EMPLEADOS
+    FOREIGN KEY(id_empleado)
+    REFERENCES Empleados(id_empleado)
+);
+GO
+
+/*
+=========================================================
+TABLA DETALLEVENTAS
+
+Permite que una venta tenga varios productos.
+=========================================================
+*/
+
+CREATE TABLE DetalleVentas
+(
+    id_detalle INT IDENTITY(1,1) PRIMARY KEY,
+
+    cantidad INT
+    CHECK(cantidad > 0),
+
+    subtotal DECIMAL(10,2),
+
+    id_venta INT,
+
+    id_producto INT,
+
+    CONSTRAINT FK_DETALLE_VENTA
+    FOREIGN KEY(id_venta)
+    REFERENCES Ventas(id_venta),
+
+    CONSTRAINT FK_DETALLE_PRODUCTO
+    FOREIGN KEY(id_producto)
+    REFERENCES Productos(id_producto)
+);
+GO
+
+/*
+=========================================================
+INSERTAR CATEGORIAS
+=========================================================
+*/
+
+INSERT INTO Categorias
+VALUES
+('Camisas'),
+('Pantalones'),
+('Chaquetas'),
+('Vestidos'),
+('Calzado');
+GO
+
+/*
+=========================================================
+INSERTAR PRODUCTOS
+=========================================================
+*/
+
+INSERT INTO Productos
+(nombre_producto,talla,color,precio,stock,id_categoria)
+VALUES
+('Camisa Formal','M','Blanco',85000,20,1),
+('Camisa Casual','L','Azul',65000,15,1),
+('Jean Clasico','32','Azul',120000,10,2),
+('Chaqueta Cuero','XL','Negro',250000,5,3),
+('Vestido Elegante','M','Rojo',180000,8,4),
+('Tenis Urbanos','40','Blanco',220000,12,5);
+GO
+
+/*
+=========================================================
+INSERTAR CLIENTES
+=========================================================
+*/
+
+INSERT INTO Clientes
+(nombre,telefono,correo,ciudad)
+VALUES
+('Harol Torres','3001111111','harol@gmail.com','Soacha'),
+('Juan Perez','3002222222','juan@gmail.com','Bogota'),
+('Maria Gomez','3003333333','maria@gmail.com','Madrid');
+GO
+
+/*
+=========================================================
+INSERTAR EMPLEADOS
+=========================================================
+*/
+
+INSERT INTO Empleados
+(nombre,cargo,salario)
+VALUES
+('Pedro Ramirez','Vendedor',1800000),
+('Laura Castro','Cajera',1700000),
+('Camilo Ruiz','Administrador',3000000);
+GO
+
+/*
+=========================================================
+INSERTAR VENTAS
+=========================================================
+*/
+
+INSERT INTO Ventas
+(total,id_cliente,id_empleado)
+VALUES
+(205000,1,1),
+(120000,2,2),
+(250000,3,1);
+GO
+
+/*
+=========================================================
+INSERTAR DETALLE VENTAS
+=========================================================
+*/
+
+INSERT INTO DetalleVentas
+(cantidad,subtotal,id_venta,id_producto)
+VALUES
+(1,85000,1,1),
+(1,120000,1,3),
+(1,120000,2,3),
+(1,250000,3,4);
+GO
+
+/*
+=========================================================
+CONSULTA INNER JOIN
+=========================================================
+*/
+
+SELECT
+P.nombre_producto,
+C.nombre_categoria,
+P.precio
+FROM Productos P
+INNER JOIN Categorias C
+ON P.id_categoria = C.id_categoria;
+GO
+
+/*
+=========================================================
+CONSULTA DE VENTAS COMPLETAS
+=========================================================
+*/
+
+SELECT
+V.id_venta,
+CL.nombre AS cliente,
+E.nombre AS empleado,
+V.total
+FROM Ventas V
+INNER JOIN Clientes CL
+ON V.id_cliente = CL.id_cliente
+INNER JOIN Empleados E
+ON V.id_empleado = E.id_empleado;
+GO
+
+/*
+=========================================================
+LEFT JOIN
+=========================================================
+*/
+
+SELECT
+CL.nombre,
+V.id_venta
+FROM Clientes CL
+LEFT JOIN Ventas V
+ON CL.id_cliente = V.id_cliente;
+GO
+
+/*
+=========================================================
+RIGHT JOIN
+=========================================================
+*/
+
+SELECT
+CL.nombre,
+V.id_venta
+FROM Clientes CL
+RIGHT JOIN Ventas V
+ON CL.id_cliente = V.id_cliente;
+GO
+
+/*
+=========================================================
+GROUP BY
+
+TOTAL VENDIDO POR EMPLEADO
+=========================================================
+*/
+
+SELECT
+E.nombre,
+SUM(V.total) AS total_vendido
+FROM Ventas V
+INNER JOIN Empleados E
+ON V.id_empleado = E.id_empleado
+GROUP BY E.nombre;
+GO
+
+/*
+=========================================================
+SP MOSTRAR PRODUCTOS
+=========================================================
+*/
+
+CREATE PROCEDURE sp_mostrar_productos
+AS
+BEGIN
+
+    SELECT *
+    FROM Productos;
+
+END;
+GO
+
+/*
+=========================================================
+SP BUSCAR PRODUCTO POR CATEGORIA
+=========================================================
+*/
+
+CREATE PROCEDURE sp_buscar_categoria
+    @categoria INT
+AS
+BEGIN
+
+    SELECT *
+    FROM Productos
+    WHERE id_categoria = @categoria;
+
+END;
+GO
+
+/*
+=========================================================
+SP INSERTAR PRODUCTO
+=========================================================
+*/
+
+CREATE PROCEDURE sp_insertar_producto
+
+    @nombre VARCHAR(100),
+    @talla VARCHAR(10),
+    @color VARCHAR(50),
+    @precio DECIMAL(10,2),
+    @stock INT,
+    @categoria INT
+
+AS
+BEGIN
+
+    INSERT INTO Productos
+    (
+        nombre_producto,
+        talla,
+        color,
+        precio,
+        stock,
+        id_categoria
+    )
+    VALUES
+    (
+        @nombre,
+        @talla,
+        @color,
+        @precio,
+        @stock,
+        @categoria
+    );
+
+END;
+GO
+
+/*
+=========================================================
+SP ACTUALIZAR PRECIO
+=========================================================
+*/
+
+CREATE PROCEDURE sp_actualizar_precio
+
+    @id INT,
+    @precio DECIMAL(10,2)
+
+AS
+BEGIN
+
+    UPDATE Productos
+
+    SET precio = @precio
+
+    WHERE id_producto = @id;
+
+END;
+GO
+
+/*
+=========================================================
+SP ELIMINAR PRODUCTO
+=========================================================
+*/
+
+CREATE PROCEDURE sp_eliminar_producto
+
+    @id INT
+
+AS
+BEGIN
+
+    DELETE FROM Productos
+
+    WHERE id_producto = @id;
+
+END;
+GO
+
+/*
+=========================================================
+REPORTE DE VENTAS
+=========================================================
+*/
+
+CREATE PROCEDURE sp_reporte_ventas
+AS
+BEGIN
+
+    SELECT
+
+        V.id_venta,
+        CL.nombre AS cliente,
+        E.nombre AS empleado,
+        V.total
+
+    FROM Ventas V
+
+    INNER JOIN Clientes CL
+    ON V.id_cliente = CL.id_cliente
+
+    INNER JOIN Empleados E
+    ON V.id_empleado = E.id_empleado;
+
+END;
+GO
+
+EXEC sp_reporte_ventas;
+GO
