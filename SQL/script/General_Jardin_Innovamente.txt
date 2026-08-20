@@ -1,0 +1,1445 @@
+/* ================================================================
+   BASE DE DATOS: INNOVAMENTE
+   SISTEMA DE GESTION PARA JARDIN INFANTIL
+
+   Motor: Microsoft SQL Server
+
+   Objetivo academico:
+   Practicar conceptos de:
+      - DDL
+      - DML
+      - PRIMARY KEY
+      - FOREIGN KEY
+      - UNIQUE
+      - CHECK
+      - DEFAULT
+      - INSERT
+      - UPDATE
+      - DELETE
+      - ALTER TABLE
+      - INNER JOIN
+      - LEFT JOIN
+      - VISTAS
+      - PROCEDIMIENTOS ALMACENADOS
+      - RELACIONES ENTRE TABLAS
+      - CONSULTAS CON WHERE, GROUP BY Y ORDER BY
+================================================================ */
+
+
+/* ================================================================
+   1. CREAR LA BASE DE DATOS
+================================================================ */
+
+CREATE DATABASE Innovamente;
+GO
+
+/* Seleccionamos la base de datos */
+USE Innovamente;
+GO
+
+
+/* ================================================================
+   2. CREAR TABLA: PADRES DE FAMILIA
+================================================================ */
+
+CREATE TABLE PadresFamilia
+(
+    IdPadre INT IDENTITY(1,1) PRIMARY KEY,
+
+    Nombre VARCHAR(50) NOT NULL,
+
+    Apellido VARCHAR(50) NOT NULL,
+
+    Documento VARCHAR(20) NOT NULL UNIQUE,
+
+    Telefono VARCHAR(20),
+
+    Correo VARCHAR(100),
+
+    Parentesco VARCHAR(30) NOT NULL
+);
+GO
+
+
+/* ================================================================
+   3. CREAR TABLA: PROFESORES
+================================================================ */
+
+CREATE TABLE Profesores
+(
+    IdProfesor INT IDENTITY(1,1) PRIMARY KEY,
+
+    Nombre VARCHAR(50) NOT NULL,
+
+    Apellido VARCHAR(50) NOT NULL,
+
+    Documento VARCHAR(20) NOT NULL UNIQUE,
+
+    Especialidad VARCHAR(100),
+
+    Telefono VARCHAR(20),
+
+    Correo VARCHAR(100),
+
+    FechaIngreso DATE NOT NULL,
+
+    Estado VARCHAR(20) DEFAULT 'ACTIVO'
+);
+GO
+
+
+/* ================================================================
+   4. CREAR TABLA: GRADOS
+================================================================ */
+
+CREATE TABLE Grados
+(
+    IdGrado INT IDENTITY(1,1) PRIMARY KEY,
+
+    NombreGrado VARCHAR(50) NOT NULL,
+
+    EdadMinima INT,
+
+    EdadMaxima INT,
+
+    Jornada VARCHAR(20)
+);
+GO
+
+
+/* ================================================================
+   5. CREAR TABLA: ESTUDIANTES
+================================================================ */
+
+CREATE TABLE Estudiantes
+(
+    IdEstudiante INT IDENTITY(1,1) PRIMARY KEY,
+
+    Nombre VARCHAR(50) NOT NULL,
+
+    Apellido VARCHAR(50) NOT NULL,
+
+    Documento VARCHAR(20) UNIQUE,
+
+    FechaNacimiento DATE NOT NULL,
+
+    Genero VARCHAR(20),
+
+    Direccion VARCHAR(150),
+
+    Estado VARCHAR(20) DEFAULT 'ACTIVO',
+
+    IdGrado INT NOT NULL,
+
+    /* 
+       LLAVE FORANEA
+
+       Relaciona Estudiantes con Grados.
+       Un estudiante pertenece a un grado.
+    */
+
+    CONSTRAINT FK_Estudiantes_Grados
+        FOREIGN KEY (IdGrado)
+        REFERENCES Grados(IdGrado)
+);
+GO
+
+
+/* ================================================================
+   6. RELACION ENTRE ESTUDIANTES Y PADRES
+================================================================ */
+
+/*
+   Un estudiante puede tener varios padres o acudientes.
+
+   Un padre tambien puede tener varios estudiantes.
+
+   Por lo tanto tenemos una relacion:
+
+             ESTUDIANTES
+                   |
+                   |
+                   N
+                   |
+            EstudiantesPadres
+                   |
+                   N
+                   |
+                PADRES
+
+   Es una relacion MUCHOS A MUCHOS.
+*/
+
+CREATE TABLE EstudiantesPadres
+(
+    IdEstudiante INT NOT NULL,
+
+    IdPadre INT NOT NULL,
+
+    EsAcudientePrincipal BIT DEFAULT 0,
+
+    CONSTRAINT PK_EstudiantesPadres
+        PRIMARY KEY (IdEstudiante, IdPadre),
+
+    CONSTRAINT FK_EP_Estudiante
+        FOREIGN KEY (IdEstudiante)
+        REFERENCES Estudiantes(IdEstudiante),
+
+    CONSTRAINT FK_EP_Padre
+        FOREIGN KEY (IdPadre)
+        REFERENCES PadresFamilia(IdPadre)
+);
+GO
+
+
+/* ================================================================
+   7. TABLA: ASIGNATURAS
+================================================================ */
+
+CREATE TABLE Asignaturas
+(
+    IdAsignatura INT IDENTITY(1,1) PRIMARY KEY,
+
+    NombreAsignatura VARCHAR(100) NOT NULL,
+
+    Descripcion VARCHAR(250),
+
+    IntensidadHoraria INT,
+
+    Estado VARCHAR(20) DEFAULT 'ACTIVA'
+);
+GO
+
+
+/* ================================================================
+   8. TABLA: PERIODOS ACADEMICOS
+================================================================ */
+
+CREATE TABLE Periodos
+(
+    IdPeriodo INT IDENTITY(1,1) PRIMARY KEY,
+
+    NombrePeriodo VARCHAR(50) NOT NULL,
+
+    FechaInicio DATE NOT NULL,
+
+    FechaFin DATE NOT NULL
+);
+GO
+
+
+/* ================================================================
+   9. TABLA: PROFESORES - ASIGNATURAS
+================================================================ */
+
+/*
+   Un profesor puede enseñar varias asignaturas.
+
+   Una asignatura puede ser enseñada por varios profesores.
+
+   Por eso necesitamos una tabla intermedia.
+*/
+
+CREATE TABLE ProfesoresAsignaturas
+(
+    IdProfesor INT NOT NULL,
+
+    IdAsignatura INT NOT NULL,
+
+    CONSTRAINT PK_ProfesoresAsignaturas
+        PRIMARY KEY (IdProfesor, IdAsignatura),
+
+    CONSTRAINT FK_PA_Profesor
+        FOREIGN KEY (IdProfesor)
+        REFERENCES Profesores(IdProfesor),
+
+    CONSTRAINT FK_PA_Asignatura
+        FOREIGN KEY (IdAsignatura)
+        REFERENCES Asignaturas(IdAsignatura)
+);
+GO
+
+
+/* ================================================================
+   10. TABLA: CURSOS
+================================================================ */
+
+/*
+   Un grado puede tener varios cursos.
+
+   Ejemplo:
+
+   Jardin
+      |
+      +---- Curso A
+      +---- Curso B
+*/
+
+CREATE TABLE Cursos
+(
+    IdCurso INT IDENTITY(1,1) PRIMARY KEY,
+
+    NombreCurso VARCHAR(50) NOT NULL,
+
+    IdGrado INT NOT NULL,
+
+    IdProfesorDirector INT,
+
+    CONSTRAINT FK_Cursos_Grado
+        FOREIGN KEY (IdGrado)
+        REFERENCES Grados(IdGrado),
+
+    CONSTRAINT FK_Cursos_Profesor
+        FOREIGN KEY (IdProfesorDirector)
+        REFERENCES Profesores(IdProfesor)
+);
+GO
+
+
+/* ================================================================
+   11. TABLA: MATRICULAS
+================================================================ */
+
+/*
+   Esta tabla relaciona:
+
+       ESTUDIANTE
+           |
+           |
+       MATRICULA
+           |
+           |
+         CURSO
+*/
+
+CREATE TABLE Matriculas
+(
+    IdMatricula INT IDENTITY(1,1) PRIMARY KEY,
+
+    IdEstudiante INT NOT NULL,
+
+    IdCurso INT NOT NULL,
+
+    FechaMatricula DATE DEFAULT GETDATE(),
+
+    Estado VARCHAR(20) DEFAULT 'ACTIVA',
+
+    CONSTRAINT FK_Matricula_Estudiante
+        FOREIGN KEY (IdEstudiante)
+        REFERENCES Estudiantes(IdEstudiante),
+
+    CONSTRAINT FK_Matricula_Curso
+        FOREIGN KEY (IdCurso)
+        REFERENCES Cursos(IdCurso)
+);
+GO
+
+
+/* ================================================================
+   12. TABLA: CALIFICACIONES
+================================================================ */
+
+CREATE TABLE Calificaciones
+(
+    IdCalificacion INT IDENTITY(1,1) PRIMARY KEY,
+
+    IdEstudiante INT NOT NULL,
+
+    IdAsignatura INT NOT NULL,
+
+    IdPeriodo INT NOT NULL,
+
+    Nota DECIMAL(3,2) NOT NULL,
+
+    Observacion VARCHAR(250),
+
+    CONSTRAINT FK_Calificacion_Estudiante
+        FOREIGN KEY (IdEstudiante)
+        REFERENCES Estudiantes(IdEstudiante),
+
+    CONSTRAINT FK_Calificacion_Asignatura
+        FOREIGN KEY (IdAsignatura)
+        REFERENCES Asignaturas(IdAsignatura),
+
+    CONSTRAINT FK_Calificacion_Periodo
+        FOREIGN KEY (IdPeriodo)
+        REFERENCES Periodos(IdPeriodo),
+
+    /* La nota debe estar entre 1 y 5 */
+    CONSTRAINT CK_Calificacion_Nota
+        CHECK (Nota >= 1 AND Nota <= 5)
+);
+GO
+
+
+/* ================================================================
+   13. TABLA: ASISTENCIA
+================================================================ */
+
+CREATE TABLE Asistencia
+(
+    IdAsistencia INT IDENTITY(1,1) PRIMARY KEY,
+
+    IdEstudiante INT NOT NULL,
+
+    Fecha DATE NOT NULL,
+
+    Estado VARCHAR(20) NOT NULL,
+
+    Observacion VARCHAR(250),
+
+    CONSTRAINT FK_Asistencia_Estudiante
+        FOREIGN KEY (IdEstudiante)
+        REFERENCES Estudiantes(IdEstudiante),
+
+    CONSTRAINT CK_Asistencia_Estado
+        CHECK (Estado IN ('PRESENTE','AUSENTE','EXCUSA'))
+);
+GO
+
+
+/* ================================================================
+   14. INSERTAR GRADOS
+================================================================ */
+
+INSERT INTO Grados
+(
+    NombreGrado,
+    EdadMinima,
+    EdadMaxima,
+    Jornada
+)
+VALUES
+('Parvulos', 2, 3, 'MANANA'),
+('Prejardin', 3, 4, 'MANANA'),
+('Jardin', 4, 5, 'MANANA'),
+('Transicion', 5, 6, 'MANANA'),
+('Parvulos B', 2, 3, 'TARDE'),
+('Prejardin B', 3, 4, 'TARDE'),
+('Jardin B', 4, 5, 'TARDE'),
+('Transicion B', 5, 6, 'TARDE');
+GO
+
+
+/* ================================================================
+   15. INSERTAR PADRES DE FAMILIA
+================================================================ */
+
+INSERT INTO PadresFamilia
+(
+    Nombre,
+    Apellido,
+    Documento,
+    Telefono,
+    Correo,
+    Parentesco
+)
+VALUES
+('Carlos','Torres','100001','3001111111','carlos@gmail.com','Padre'),
+('Maria','Gomez','100002','3001111112','maria@gmail.com','Madre'),
+('Luis','Rodriguez','100003','3001111113','luis@gmail.com','Padre'),
+('Ana','Martinez','100004','3001111114','ana@gmail.com','Madre'),
+('Pedro','Lopez','100005','3001111115','pedro@gmail.com','Padre'),
+('Laura','Hernandez','100006','3001111116','laura@gmail.com','Madre'),
+('Jorge','Perez','100007','3001111117','jorge@gmail.com','Padre'),
+('Diana','Castro','100008','3001111118','diana@gmail.com','Madre'),
+('Andres','Moreno','100009','3001111119','andres@gmail.com','Padre'),
+('Sandra','Vargas','100010','3001111120','sandra@gmail.com','Madre'),
+('Felipe','Ramirez','100011','3001111121','felipe@gmail.com','Padre'),
+('Carolina','Rojas','100012','3001111122','carolina@gmail.com','Madre'),
+('Miguel','Suarez','100013','3001111123','miguel@gmail.com','Padre'),
+('Paola','Diaz','100014','3001111124','paola@gmail.com','Madre'),
+('Ricardo','Cortes','100015','3001111125','ricardo@gmail.com','Padre');
+GO
+
+
+/* ================================================================
+   16. INSERTAR PROFESORES
+================================================================ */
+
+INSERT INTO Profesores
+(
+    Nombre,
+    Apellido,
+    Documento,
+    Especialidad,
+    Telefono,
+    Correo,
+    FechaIngreso
+)
+VALUES
+('Laura','Salazar','200001','Educacion Infantil','3102000001','laura@innovamente.edu.co','2022-01-15'),
+('Carlos','Mendez','200002','Psicopedagogia','3102000002','carlos@innovamente.edu.co','2021-02-10'),
+('Diana','Gomez','200003','Educacion Infantil','3102000003','diana@innovamente.edu.co','2023-01-20'),
+('Andres','Rojas','200004','Educacion Fisica','3102000004','andres@innovamente.edu.co','2020-07-10'),
+('Paola','Torres','200005','Musica','3102000005','paola@innovamente.edu.co','2022-08-01'),
+('Marcela','Vargas','200006','Arte Infantil','3102000006','marcela@innovamente.edu.co','2021-03-12'),
+('Felipe','Castro','200007','Tecnologia Infantil','3102000007','felipe@innovamente.edu.co','2023-02-05'),
+('Sandra','Perez','200008','Lenguaje Infantil','3102000008','sandra@innovamente.edu.co','2019-01-20'),
+('Jorge','Moreno','200009','Matematicas Infantiles','3102000009','jorge@innovamente.edu.co','2020-01-15'),
+('Natalia','Diaz','200010','Ingles Infantil','3102000010','natalia@innovamente.edu.co','2022-04-18');
+GO
+
+
+/* ================================================================
+   17. INSERTAR ASIGNATURAS
+================================================================ */
+
+INSERT INTO Asignaturas
+(
+    NombreAsignatura,
+    Descripcion,
+    IntensidadHoraria
+)
+VALUES
+('Lenguaje','Desarrollo de comunicacion oral y escrita',4),
+('Matematicas','Pensamiento logico y nociones matematicas',4),
+('Arte','Expresion artistica y creatividad',3),
+('Musica','Expresion musical y ritmo',2),
+('Educacion Fisica','Desarrollo motor y corporal',3),
+('Ciencias','Exploracion del entorno natural',3),
+('Tecnologia','Exploracion de tecnologia',2),
+('Ingles','Introduccion al idioma ingles',2),
+('Convivencia','Desarrollo socioemocional',2),
+('Motricidad','Coordinacion y habilidades motoras',3);
+GO
+
+
+/* ================================================================
+   18. INSERTAR PERIODOS
+================================================================ */
+
+INSERT INTO Periodos
+(
+    NombrePeriodo,
+    FechaInicio,
+    FechaFin
+)
+VALUES
+('Primer Periodo','2026-01-15','2026-03-31'),
+('Segundo Periodo','2026-04-01','2026-06-30'),
+('Tercer Periodo','2026-07-01','2026-09-30'),
+('Cuarto Periodo','2026-10-01','2026-11-30');
+GO
+
+
+/* ================================================================
+   19. INSERTAR ESTUDIANTES
+================================================================ */
+
+INSERT INTO Estudiantes
+(
+    Nombre,
+    Apellido,
+    Documento,
+    FechaNacimiento,
+    Genero,
+    Direccion,
+    IdGrado
+)
+VALUES
+('Juan','Torres','300001','2021-05-10','M','Calle 1 #10-20',3),
+('Sofia','Gomez','300002','2021-06-12','F','Calle 2 #11-21',3),
+('Mateo','Rodriguez','300003','2020-04-15','M','Calle 3 #12-22',4),
+('Valentina','Martinez','300004','2020-08-20','F','Calle 4 #13-23',4),
+('Samuel','Lopez','300005','2022-02-11','M','Calle 5 #14-24',2),
+('Isabella','Hernandez','300006','2022-03-17','F','Calle 6 #15-25',2),
+('Nicolas','Perez','300007','2021-01-20','M','Calle 7 #16-26',3),
+('Emma','Castro','300008','2020-10-11','F','Calle 8 #17-27',4),
+('Sebastian','Moreno','300009','2021-09-01','M','Calle 9 #18-28',3),
+('Luciana','Vargas','300010','2020-12-05','F','Calle 10 #19-29',4),
+('Daniel','Ramirez','300011','2022-05-01','M','Calle 11 #20-30',2),
+('Mariana','Rojas','300012','2021-11-10','F','Calle 12 #21-31',3),
+('Alejandro','Suarez','300013','2020-02-14','M','Calle 13 #22-32',4),
+('Gabriela','Diaz','300014','2021-07-18','F','Calle 14 #23-33',3),
+('Martin','Cortes','300015','2022-01-30','M','Calle 15 #24-34',2),
+('Antonella','Torres','300016','2021-03-12','F','Calle 16 #25-35',3),
+('David','Gomez','300017','2020-06-22','M','Calle 17 #26-36',4),
+('Sara','Rodriguez','300018','2021-08-14','F','Calle 18 #27-37',3),
+('Tomas','Martinez','300019','2020-09-25','M','Calle 19 #28-38',4),
+('Manuela','Lopez','300020','2021-12-01','F','Calle 20 #29-39',3),
+('Emiliano','Hernandez','300021','2022-04-02','M','Calle 21 #30-40',2),
+('Julieta','Perez','300022','2021-02-16','F','Calle 22 #31-41',3),
+('Thiago','Castro','300023','2020-11-19','M','Calle 23 #32-42',4),
+('Salome','Moreno','300024','2021-10-30','F','Calle 24 #33-43',3),
+('Benjamin','Vargas','300025','2022-03-04','M','Calle 25 #34-44',2);
+GO
+
+
+/* ================================================================
+   20. RELACIONAR ESTUDIANTES CON PADRES
+================================================================ */
+
+INSERT INTO EstudiantesPadres
+(
+    IdEstudiante,
+    IdPadre,
+    EsAcudientePrincipal
+)
+VALUES
+(1,1,1),
+(2,2,1),
+(3,3,1),
+(4,4,1),
+(5,5,1),
+(6,6,1),
+(7,7,1),
+(8,8,1),
+(9,9,1),
+(10,10,1),
+(11,11,1),
+(12,12,1),
+(13,13,1),
+(14,14,1),
+(15,15,1),
+(16,1,0),
+(17,2,0),
+(18,3,0),
+(19,4,0),
+(20,5,0);
+GO
+
+
+/* ================================================================
+   21. RELACIONAR PROFESORES CON ASIGNATURAS
+================================================================ */
+
+INSERT INTO ProfesoresAsignaturas
+(
+    IdProfesor,
+    IdAsignatura
+)
+VALUES
+(1,1),
+(1,9),
+(2,2),
+(2,6),
+(3,3),
+(3,1),
+(4,5),
+(4,10),
+(5,4),
+(6,3),
+(7,7),
+(8,1),
+(9,2),
+(10,8);
+GO
+
+
+/* ================================================================
+   22. CREAR CURSOS
+================================================================ */
+
+INSERT INTO Cursos
+(
+    NombreCurso,
+    IdGrado,
+    IdProfesorDirector
+)
+VALUES
+('Jardin A',3,1),
+('Transicion A',4,2),
+('Prejardin A',2,3),
+('Jardin B',7,4),
+('Transicion B',8,5),
+('Parvulos A',1,6),
+('Prejardin B',6,7),
+('Jardin C',3,8);
+GO
+
+
+/* ================================================================
+   23. INSERTAR MATRICULAS
+================================================================ */
+
+INSERT INTO Matriculas
+(
+    IdEstudiante,
+    IdCurso
+)
+VALUES
+(1,1),
+(2,1),
+(3,2),
+(4,2),
+(5,3),
+(6,3),
+(7,1),
+(8,2),
+(9,1),
+(10,2),
+(11,3),
+(12,1),
+(13,2),
+(14,1),
+(15,3),
+(16,1),
+(17,2),
+(18,1),
+(19,2),
+(20,1),
+(21,3),
+(22,1),
+(23,2),
+(24,1),
+(25,3);
+GO
+
+
+/* ================================================================
+   24. INSERTAR CALIFICACIONES
+================================================================ */
+
+INSERT INTO Calificaciones
+(
+    IdEstudiante,
+    IdAsignatura,
+    IdPeriodo,
+    Nota,
+    Observacion
+)
+VALUES
+(1,1,1,4.5,'Excelente participacion'),
+(1,2,1,4.2,'Buen proceso'),
+(1,3,1,4.8,'Muy creativo'),
+
+(2,1,1,4.7,'Excelente comunicacion'),
+(2,2,1,4.0,'Buen proceso'),
+(2,4,1,4.6,'Muy buena participacion'),
+
+(3,1,1,3.8,'Debe fortalecer lectura'),
+(3,2,1,4.2,'Buen desempeño'),
+(3,5,1,4.5,'Excelente trabajo'),
+
+(4,1,1,4.9,'Excelente'),
+(4,2,1,4.8,'Excelente'),
+(4,3,1,4.7,'Muy creativo'),
+
+(5,1,1,4.0,'Buen desempeño'),
+(5,2,1,3.9,'Debe practicar'),
+(5,5,1,4.4,'Buen desarrollo motor'),
+
+(6,1,1,4.6,'Excelente'),
+(6,2,1,4.5,'Muy buen proceso'),
+(6,3,1,4.9,'Excelente creatividad'),
+
+(7,1,1,4.3,'Buen desempeño'),
+(7,2,1,4.1,'Buen proceso'),
+(7,6,1,4.4,'Buena observacion');
+
+GO
+
+
+/* ================================================================
+   25. INSERTAR ASISTENCIAS
+================================================================ */
+
+INSERT INTO Asistencia
+(
+    IdEstudiante,
+    Fecha,
+    Estado,
+    Observacion
+)
+VALUES
+(1,'2026-08-03','PRESENTE','Asistio normalmente'),
+(2,'2026-08-03','PRESENTE','Asistio normalmente'),
+(3,'2026-08-03','AUSENTE','Sin justificacion'),
+(4,'2026-08-03','PRESENTE','Asistio normalmente'),
+(5,'2026-08-03','EXCUSA','Cita medica'),
+(6,'2026-08-03','PRESENTE','Asistio normalmente'),
+(7,'2026-08-03','PRESENTE','Asistio normalmente'),
+(8,'2026-08-03','AUSENTE','Sin justificacion'),
+(9,'2026-08-03','PRESENTE','Asistio normalmente'),
+(10,'2026-08-03','PRESENTE','Asistio normalmente');
+GO
+
+
+/* ================================================================
+   26. CONSULTA SIMPLE
+================================================================ */
+
+/*
+   Mostrar todos los estudiantes.
+*/
+
+SELECT *
+FROM Estudiantes;
+GO
+
+
+/* ================================================================
+   27. WHERE
+================================================================ */
+
+/*
+   Mostrar estudiantes del grado 3.
+*/
+
+SELECT *
+FROM Estudiantes
+WHERE IdGrado = 3;
+GO
+
+
+/* ================================================================
+   28. ORDER BY
+================================================================ */
+
+SELECT *
+FROM Estudiantes
+ORDER BY Apellido ASC;
+GO
+
+
+/* ================================================================
+   29. INNER JOIN
+================================================================ */
+
+/*
+   INNER JOIN muestra solamente los registros
+   que tienen coincidencia en las dos tablas.
+
+   En este ejemplo:
+
+   ESTUDIANTES ---- GRADOS
+
+   Solo aparecen estudiantes que tienen
+   un grado relacionado.
+*/
+
+SELECT
+    E.IdEstudiante,
+    E.Nombre,
+    E.Apellido,
+    G.NombreGrado,
+    G.Jornada
+FROM Estudiantes E
+INNER JOIN Grados G
+    ON E.IdGrado = G.IdGrado;
+GO
+
+
+/* ================================================================
+   30. INNER JOIN ENTRE VARIAS TABLAS
+================================================================ */
+
+/*
+   Mostrar:
+
+   Estudiante
+   Curso
+   Grado
+   Profesor director
+*/
+
+SELECT
+    E.Nombre AS Estudiante,
+    E.Apellido,
+    C.NombreCurso,
+    G.NombreGrado,
+    P.Nombre AS Profesor,
+    P.Apellido AS ApellidoProfesor
+FROM Estudiantes E
+INNER JOIN Matriculas M
+    ON E.IdEstudiante = M.IdEstudiante
+INNER JOIN Cursos C
+    ON M.IdCurso = C.IdCurso
+INNER JOIN Grados G
+    ON C.IdGrado = G.IdGrado
+INNER JOIN Profesores P
+    ON C.IdProfesorDirector = P.IdProfesor;
+GO
+
+
+/* ================================================================
+   31. LEFT JOIN
+================================================================ */
+
+/*
+   LEFT JOIN muestra TODOS los estudiantes,
+   incluso si alguno no tiene una calificacion.
+
+   Esto es muy importante en bases de datos.
+
+   INNER JOIN:
+   solamente coincidencias.
+
+   LEFT JOIN:
+   todos los registros de la tabla izquierda
+   y las coincidencias de la derecha.
+*/
+
+SELECT
+    E.Nombre,
+    E.Apellido,
+    C.Nota
+FROM Estudiantes E
+LEFT JOIN Calificaciones C
+    ON E.IdEstudiante = C.IdEstudiante;
+GO
+
+
+/* ================================================================
+   32. JOIN CON PADRES
+================================================================ */
+
+SELECT
+    E.Nombre AS NombreEstudiante,
+    E.Apellido AS ApellidoEstudiante,
+    P.Nombre AS NombrePadre,
+    P.Apellido AS ApellidoPadre,
+    P.Telefono
+FROM Estudiantes E
+INNER JOIN EstudiantesPadres EP
+    ON E.IdEstudiante = EP.IdEstudiante
+INNER JOIN PadresFamilia P
+    ON EP.IdPadre = P.IdPadre;
+GO
+
+
+/* ================================================================
+   33. PROMEDIO DE CALIFICACIONES
+================================================================ */
+
+SELECT
+    E.Nombre,
+    E.Apellido,
+    AVG(C.Nota) AS Promedio
+FROM Estudiantes E
+INNER JOIN Calificaciones C
+    ON E.IdEstudiante = C.IdEstudiante
+GROUP BY
+    E.Nombre,
+    E.Apellido;
+GO
+
+
+/* ================================================================
+   34. GROUP BY
+================================================================ */
+
+/*
+   Contar cuantos estudiantes existen
+   por cada grado.
+*/
+
+SELECT
+    G.NombreGrado,
+    COUNT(E.IdEstudiante) AS CantidadEstudiantes
+FROM Grados G
+LEFT JOIN Estudiantes E
+    ON G.IdGrado = E.IdGrado
+GROUP BY
+    G.NombreGrado;
+GO
+
+
+/* ================================================================
+   35. UPDATE
+================================================================ */
+
+/*
+   UPDATE sirve para modificar datos existentes.
+
+   Ejemplo:
+   cambiar el telefono del padre con IdPadre = 1.
+*/
+
+UPDATE PadresFamilia
+SET Telefono = '3119999999'
+WHERE IdPadre = 1;
+GO
+
+
+/* ================================================================
+   36. UPDATE DE UNA NOTA
+================================================================ */
+
+UPDATE Calificaciones
+SET Nota = 4.8,
+    Observacion = 'Mejoro notablemente su desempeño'
+WHERE IdCalificacion = 1;
+GO
+
+
+/* ================================================================
+   37. DELETE
+================================================================ */
+
+/*
+   DELETE elimina registros.
+
+   IMPORTANTE:
+
+   Siempre utilizar WHERE cuando se quiere eliminar
+   un registro especifico.
+
+   NO HACER:
+
+   DELETE FROM PadresFamilia;
+
+   porque eliminaria todos los registros.
+*/
+
+DELETE FROM Asistencia
+WHERE IdAsistencia = 10;
+GO
+
+
+/* ================================================================
+   38. ALTER TABLE - AGREGAR COLUMNA
+================================================================ */
+
+/*
+   ALTER TABLE permite modificar la estructura
+   de una tabla existente.
+
+   Agregamos una columna para guardar
+   el nivel socioemocional.
+*/
+
+ALTER TABLE Estudiantes
+ADD ObservacionGeneral VARCHAR(250);
+GO
+
+
+/* ================================================================
+   39. ALTER TABLE - AGREGAR RESTRICCION
+================================================================ */
+
+ALTER TABLE Profesores
+ADD CONSTRAINT CK_Profesores_Estado
+CHECK (Estado IN ('ACTIVO','INACTIVO'));
+GO
+
+
+/* ================================================================
+   40. VISTA: ESTUDIANTES Y GRADOS
+================================================================ */
+
+/*
+   Una VISTA es una consulta almacenada.
+
+   No guarda normalmente los datos duplicados.
+   Guarda la consulta.
+
+   Ventajas:
+
+   - Facilita consultas frecuentes.
+   - Mejora la organizacion.
+   - Puede ocultar columnas sensibles.
+   - Permite reutilizar consultas.
+
+*/
+
+CREATE VIEW vw_EstudiantesGrados
+AS
+SELECT
+    E.IdEstudiante,
+    E.Nombre,
+    E.Apellido,
+    G.NombreGrado,
+    G.Jornada
+FROM Estudiantes E
+INNER JOIN Grados G
+    ON E.IdGrado = G.IdGrado;
+GO
+
+
+/* Consultar la vista */
+
+SELECT *
+FROM vw_EstudiantesGrados;
+GO
+
+
+/* ================================================================
+   41. VISTA DE CALIFICACIONES
+================================================================ */
+
+CREATE VIEW vw_NotasEstudiantes
+AS
+SELECT
+    E.Nombre AS Estudiante,
+    E.Apellido,
+    A.NombreAsignatura,
+    P.NombrePeriodo,
+    C.Nota,
+    C.Observacion
+FROM Calificaciones C
+INNER JOIN Estudiantes E
+    ON C.IdEstudiante = E.IdEstudiante
+INNER JOIN Asignaturas A
+    ON C.IdAsignatura = A.IdAsignatura
+INNER JOIN Periodos P
+    ON C.IdPeriodo = P.IdPeriodo;
+GO
+
+
+SELECT *
+FROM vw_NotasEstudiantes;
+GO
+
+
+/* ================================================================
+   42. PROCEDIMIENTO ALMACENADO SIN PARAMETROS
+================================================================ */
+
+/*
+   Un procedimiento almacenado permite guardar
+   instrucciones SQL para reutilizarlas.
+
+   Este procedimiento muestra todos los estudiantes.
+*/
+
+CREATE PROCEDURE sp_ListarEstudiantes
+AS
+BEGIN
+
+    SELECT
+        IdEstudiante,
+        Nombre,
+        Apellido,
+        FechaNacimiento,
+        Genero,
+        Estado
+    FROM Estudiantes
+    ORDER BY Apellido;
+
+END;
+GO
+
+
+/* Ejecutar procedimiento */
+
+EXEC sp_ListarEstudiantes;
+GO
+
+
+/* ================================================================
+   43. PROCEDIMIENTO ALMACENADO CON PARAMETRO
+================================================================ */
+
+/*
+   Este procedimiento recibe el Id de un estudiante
+   y muestra sus datos.
+*/
+
+CREATE PROCEDURE sp_BuscarEstudiante
+    @IdEstudiante INT
+AS
+BEGIN
+
+    SELECT
+        E.IdEstudiante,
+        E.Nombre,
+        E.Apellido,
+        G.NombreGrado
+    FROM Estudiantes E
+    INNER JOIN Grados G
+        ON E.IdGrado = G.IdGrado
+    WHERE E.IdEstudiante = @IdEstudiante;
+
+END;
+GO
+
+
+/* Ejecutar */
+
+EXEC sp_BuscarEstudiante @IdEstudiante = 5;
+GO
+
+
+/* ================================================================
+   44. PROCEDIMIENTO PARA CONSULTAR NOTAS
+================================================================ */
+
+CREATE PROCEDURE sp_NotasEstudiante
+    @IdEstudiante INT
+AS
+BEGIN
+
+    SELECT
+        E.Nombre,
+        E.Apellido,
+        A.NombreAsignatura,
+        P.NombrePeriodo,
+        C.Nota,
+        C.Observacion
+
+    FROM Calificaciones C
+
+    INNER JOIN Estudiantes E
+        ON C.IdEstudiante = E.IdEstudiante
+
+    INNER JOIN Asignaturas A
+        ON C.IdAsignatura = A.IdAsignatura
+
+    INNER JOIN Periodos P
+        ON C.IdPeriodo = P.IdPeriodo
+
+    WHERE E.IdEstudiante = @IdEstudiante;
+
+END;
+GO
+
+
+EXEC sp_NotasEstudiante @IdEstudiante = 1;
+GO
+
+
+/* ================================================================
+   45. PROCEDIMIENTO PARA INSERTAR ESTUDIANTE
+================================================================ */
+
+CREATE PROCEDURE sp_InsertarEstudiante
+
+    @Nombre VARCHAR(50),
+    @Apellido VARCHAR(50),
+    @Documento VARCHAR(20),
+    @FechaNacimiento DATE,
+    @Genero VARCHAR(20),
+    @Direccion VARCHAR(150),
+    @IdGrado INT
+
+AS
+BEGIN
+
+    INSERT INTO Estudiantes
+    (
+        Nombre,
+        Apellido,
+        Documento,
+        FechaNacimiento,
+        Genero,
+        Direccion,
+        IdGrado
+    )
+    VALUES
+    (
+        @Nombre,
+        @Apellido,
+        @Documento,
+        @FechaNacimiento,
+        @Genero,
+        @Direccion,
+        @IdGrado
+    );
+
+END;
+GO
+
+
+/* ================================================================
+   EJEMPLO DE EJECUCION
+================================================================ */
+
+EXEC sp_InsertarEstudiante
+    @Nombre = 'Carlos',
+    @Apellido = 'Mora',
+    @Documento = '300100',
+    @FechaNacimiento = '2022-06-15',
+    @Genero = 'M',
+    @Direccion = 'Calle 50 #20-10',
+    @IdGrado = 2;
+GO
+
+
+/* ================================================================
+   46. PROCEDIMIENTO PARA ACTUALIZAR ESTUDIANTE
+================================================================ */
+
+CREATE PROCEDURE sp_ActualizarEstudiante
+
+    @IdEstudiante INT,
+    @Nombre VARCHAR(50),
+    @Apellido VARCHAR(50),
+    @Direccion VARCHAR(150)
+
+AS
+BEGIN
+
+    UPDATE Estudiantes
+
+    SET
+        Nombre = @Nombre,
+        Apellido = @Apellido,
+        Direccion = @Direccion
+
+    WHERE IdEstudiante = @IdEstudiante;
+
+END;
+GO
+
+
+EXEC sp_ActualizarEstudiante
+    @IdEstudiante = 26,
+    @Nombre = 'Carlos Andres',
+    @Apellido = 'Mora',
+    @Direccion = 'Carrera 10 #20-30';
+GO
+
+
+/* ================================================================
+   47. PROCEDIMIENTO PARA CONSULTAR ESTUDIANTES POR GRADO
+================================================================ */
+
+CREATE PROCEDURE sp_EstudiantesPorGrado
+
+    @IdGrado INT
+
+AS
+BEGIN
+
+    SELECT
+        E.IdEstudiante,
+        E.Nombre,
+        E.Apellido,
+        G.NombreGrado
+
+    FROM Estudiantes E
+
+    INNER JOIN Grados G
+        ON E.IdGrado = G.IdGrado
+
+    WHERE G.IdGrado = @IdGrado
+
+    ORDER BY E.Apellido;
+
+END;
+GO
+
+
+EXEC sp_EstudiantesPorGrado @IdGrado = 3;
+GO
+
+
+/* ================================================================
+   48. CONSULTA PARA ESTUDIANTES CON PROMEDIO MAYOR A 4
+================================================================ */
+
+SELECT
+    E.Nombre,
+    E.Apellido,
+    AVG(C.Nota) AS Promedio
+FROM Estudiantes E
+INNER JOIN Calificaciones C
+    ON E.IdEstudiante = C.IdEstudiante
+GROUP BY
+    E.Nombre,
+    E.Apellido
+HAVING AVG(C.Nota) >= 4;
+GO
+
+
+/* ================================================================
+   49. CONSULTA DE PROFESORES Y ASIGNATURAS
+================================================================ */
+
+SELECT
+    P.Nombre AS Profesor,
+    P.Apellido,
+    A.NombreAsignatura
+FROM Profesores P
+INNER JOIN ProfesoresAsignaturas PA
+    ON P.IdProfesor = PA.IdProfesor
+INNER JOIN Asignaturas A
+    ON PA.IdAsignatura = A.IdAsignatura
+ORDER BY
+    P.Apellido;
+GO
+
+
+/* ================================================================
+   50. LEFT JOIN PARA VER TODOS LOS PROFESORES
+================================================================ */
+
+/*
+   Aqui queremos ver TODOS los profesores,
+   incluso aquellos que actualmente no tengan
+   una asignatura relacionada.
+*/
+
+SELECT
+    P.Nombre,
+    P.Apellido,
+    A.NombreAsignatura
+FROM Profesores P
+LEFT JOIN ProfesoresAsignaturas PA
+    ON P.IdProfesor = PA.IdProfesor
+LEFT JOIN Asignaturas A
+    ON PA.IdAsignatura = A.IdAsignatura;
+GO
+
+
+/* ================================================================
+   51. CONSULTA DE ESTUDIANTES SIN CALIFICACIONES
+================================================================ */
+
+/*
+   Muy buen ejemplo para explicar LEFT JOIN.
+
+   Buscamos estudiantes que NO tienen notas.
+
+   Cuando no existe coincidencia,
+   C.IdCalificacion sera NULL.
+*/
+
+SELECT
+    E.IdEstudiante,
+    E.Nombre,
+    E.Apellido
+FROM Estudiantes E
+LEFT JOIN Calificaciones C
+    ON E.IdEstudiante = C.IdEstudiante
+WHERE C.IdCalificacion IS NULL;
+GO
+
+
+/* ================================================================
+   52. CONSULTA COMPLETA DEL SISTEMA ACADEMICO
+================================================================ */
+
+SELECT
+
+    E.Nombre AS NombreEstudiante,
+    E.Apellido AS ApellidoEstudiante,
+
+    G.NombreGrado,
+
+    C.NombreCurso,
+
+    A.NombreAsignatura,
+
+    P.NombrePeriodo,
+
+    CAL.Nota,
+
+    CAL.Observacion
+
+FROM Estudiantes E
+
+INNER JOIN Grados G
+    ON E.IdGrado = G.IdGrado
+
+INNER JOIN Matriculas M
+    ON E.IdEstudiante = M.IdEstudiante
+
+INNER JOIN Cursos C
+    ON M.IdCurso = C.IdCurso
+
+INNER JOIN Calificaciones CAL
+    ON E.IdEstudiante = CAL.IdEstudiante
+
+INNER JOIN Asignaturas A
+    ON CAL.IdAsignatura = A.IdAsignatura
+
+INNER JOIN Periodos P
+    ON CAL.IdPeriodo = P.IdPeriodo
+
+ORDER BY
+    E.Apellido,
+    E.Nombre;
+GO

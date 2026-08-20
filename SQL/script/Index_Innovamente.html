@@ -1,0 +1,2766 @@
+<?php
+/* ============================================================
+   INNOVAMENTE - APLICACION EDUCATIVA SQL SERVER
+   Archivo unico: index.php
+
+   Requisitos:
+   - PHP 8.x
+   - SQL Server
+   - Extension pdo_sqlsrv habilitada
+   - Base de datos: Innovamente
+
+   Funcionalidades:
+   - CRUD Estudiantes
+   - CRUD Profesores
+   - CRUD Padres
+   - CRUD Asignaturas
+   - CRUD Grados
+   - Registro de calificaciones
+   - INNER JOIN
+   - LEFT JOIN
+   - Vistas
+   - Procedimientos almacenados
+   - Consultas SQL educativas
+============================================================ */
+
+
+/* ============================================================
+   1. CONFIGURACION DE LA CONEXION
+============================================================ */
+
+$server = "localhost";
+$database = "Innovamente";
+$username = "sa";
+$password = "TU_PASSWORD";
+
+$mensaje = "";
+$error = "";
+$resultados = [];
+$columnas = [];
+
+
+/* ============================================================
+   2. CONEXION A SQL SERVER
+============================================================ */
+
+try {
+
+    $conexion = new PDO(
+        "sqlsrv:Server=$server;Database=$database;TrustServerCertificate=true",
+        $username,
+        $password
+    );
+
+    $conexion->setAttribute(
+        PDO::ATTR_ERRMODE,
+        PDO::ERRMODE_EXCEPTION
+    );
+
+} catch (PDOException $e) {
+
+    die("
+        <div style='font-family:Arial;padding:30px'>
+            <h2>Error de conexion</h2>
+            <p>No fue posible conectarse a SQL Server.</p>
+            <p><strong>Mensaje:</strong> "
+            . htmlspecialchars($e->getMessage()) .
+            "</p>
+        </div>
+    ");
+}
+
+
+/* ============================================================
+   3. FUNCION PARA EJECUTAR CONSULTAS
+============================================================ */
+
+function ejecutarConsulta($conexion, $sql)
+{
+    global $resultados, $columnas;
+
+    $resultados = [];
+    $columnas = [];
+
+    $stmt = $conexion->query($sql);
+
+    $resultados = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    if (!empty($resultados)) {
+        $columnas = array_keys($resultados[0]);
+    }
+
+    return $resultados;
+}
+
+
+/* ============================================================
+   4. FUNCION PARA ESCAPAR HTML
+============================================================ */
+
+function e($texto)
+{
+    return htmlspecialchars(
+        (string)$texto,
+        ENT_QUOTES,
+        'UTF-8'
+    );
+}
+
+
+/* ============================================================
+   5. PROCESAMIENTO DE FORMULARIOS
+============================================================ */
+
+if ($_SERVER["REQUEST_METHOD"] === "POST") {
+
+    $accion = $_POST["accion"] ?? "";
+
+
+    /* ========================================================
+       INSERTAR ESTUDIANTE
+    ======================================================== */
+
+    if ($accion === "insertar_estudiante") {
+
+        try {
+
+            $sql = "
+                INSERT INTO Estudiantes
+                (
+                    Nombre,
+                    Apellido,
+                    Documento,
+                    FechaNacimiento,
+                    Genero,
+                    Direccion,
+                    IdGrado
+                )
+                VALUES
+                (
+                    ?, ?, ?, ?, ?, ?, ?
+                )
+            ";
+
+            $stmt = $conexion->prepare($sql);
+
+            $stmt->execute([
+                $_POST["nombre"],
+                $_POST["apellido"],
+                $_POST["documento"],
+                $_POST["fecha"],
+                $_POST["genero"],
+                $_POST["direccion"],
+                $_POST["grado"]
+            ]);
+
+            $mensaje = "Estudiante registrado correctamente.";
+
+        } catch (PDOException $e) {
+
+            $error = "No fue posible registrar el estudiante: "
+                . $e->getMessage();
+        }
+    }
+
+
+    /* ========================================================
+       ACTUALIZAR ESTUDIANTE
+    ======================================================== */
+
+    if ($accion === "actualizar_estudiante") {
+
+        try {
+
+            $sql = "
+                UPDATE Estudiantes
+                SET
+                    Nombre = ?,
+                    Apellido = ?,
+                    Documento = ?,
+                    FechaNacimiento = ?,
+                    Genero = ?,
+                    Direccion = ?,
+                    IdGrado = ?
+                WHERE IdEstudiante = ?
+            ";
+
+            $stmt = $conexion->prepare($sql);
+
+            $stmt->execute([
+                $_POST["nombre"],
+                $_POST["apellido"],
+                $_POST["documento"],
+                $_POST["fecha"],
+                $_POST["genero"],
+                $_POST["direccion"],
+                $_POST["grado"],
+                $_POST["id"]
+            ]);
+
+            $mensaje = "Estudiante actualizado correctamente.";
+
+        } catch (PDOException $e) {
+
+            $error = "Error actualizando estudiante: "
+                . $e->getMessage();
+        }
+    }
+
+
+    /* ========================================================
+       ELIMINAR ESTUDIANTE
+    ======================================================== */
+
+    if ($accion === "eliminar_estudiante") {
+
+        try {
+
+            $sql = "
+                DELETE FROM Estudiantes
+                WHERE IdEstudiante = ?
+            ";
+
+            $stmt = $conexion->prepare($sql);
+
+            $stmt->execute([
+                $_POST["id"]
+            ]);
+
+            $mensaje = "Estudiante eliminado correctamente.";
+
+        } catch (PDOException $e) {
+
+            $error =
+                "No se puede eliminar el estudiante. "
+                . "Puede tener registros relacionados. "
+                . $e->getMessage();
+        }
+    }
+
+
+    /* ========================================================
+       INSERTAR PROFESOR
+    ======================================================== */
+
+    if ($accion === "insertar_profesor") {
+
+        try {
+
+            $sql = "
+                INSERT INTO Profesores
+                (
+                    Nombre,
+                    Apellido,
+                    Documento,
+                    Especialidad,
+                    Telefono,
+                    Correo,
+                    FechaIngreso
+                )
+                VALUES
+                (?, ?, ?, ?, ?, ?, ?)
+            ";
+
+            $stmt = $conexion->prepare($sql);
+
+            $stmt->execute([
+                $_POST["nombre"],
+                $_POST["apellido"],
+                $_POST["documento"],
+                $_POST["especialidad"],
+                $_POST["telefono"],
+                $_POST["correo"],
+                $_POST["fecha"]
+            ]);
+
+            $mensaje = "Profesor registrado correctamente.";
+
+        } catch (PDOException $e) {
+
+            $error =
+                "Error registrando profesor: "
+                . $e->getMessage();
+        }
+    }
+
+
+    /* ========================================================
+       ELIMINAR PROFESOR
+    ======================================================== */
+
+    if ($accion === "eliminar_profesor") {
+
+        try {
+
+            $stmt = $conexion->prepare(
+                "DELETE FROM Profesores WHERE IdProfesor = ?"
+            );
+
+            $stmt->execute([
+                $_POST["id"]
+            ]);
+
+            $mensaje = "Profesor eliminado correctamente.";
+
+        } catch (PDOException $e) {
+
+            $error =
+                "No se puede eliminar el profesor porque "
+                . "tiene registros relacionados.";
+        }
+    }
+
+
+    /* ========================================================
+       INSERTAR PADRE
+    ======================================================== */
+
+    if ($accion === "insertar_padre") {
+
+        try {
+
+            $sql = "
+                INSERT INTO PadresFamilia
+                (
+                    Nombre,
+                    Apellido,
+                    Documento,
+                    Telefono,
+                    Correo,
+                    Parentesco
+                )
+                VALUES (?, ?, ?, ?, ?, ?)
+            ";
+
+            $stmt = $conexion->prepare($sql);
+
+            $stmt->execute([
+                $_POST["nombre"],
+                $_POST["apellido"],
+                $_POST["documento"],
+                $_POST["telefono"],
+                $_POST["correo"],
+                $_POST["parentesco"]
+            ]);
+
+            $mensaje =
+                "Padre de familia registrado correctamente.";
+
+        } catch (PDOException $e) {
+
+            $error =
+                "Error registrando padre: "
+                . $e->getMessage();
+        }
+    }
+
+
+    /* ========================================================
+       ELIMINAR PADRE
+    ======================================================== */
+
+    if ($accion === "eliminar_padre") {
+
+        try {
+
+            $stmt = $conexion->prepare(
+                "DELETE FROM PadresFamilia WHERE IdPadre = ?"
+            );
+
+            $stmt->execute([
+                $_POST["id"]
+            ]);
+
+            $mensaje = "Padre eliminado correctamente.";
+
+        } catch (PDOException $e) {
+
+            $error =
+                "No se puede eliminar el padre porque "
+                . "tiene estudiantes relacionados.";
+        }
+    }
+
+
+    /* ========================================================
+       INSERTAR ASIGNATURA
+    ======================================================== */
+
+    if ($accion === "insertar_asignatura") {
+
+        try {
+
+            $sql = "
+                INSERT INTO Asignaturas
+                (
+                    NombreAsignatura,
+                    Descripcion,
+                    IntensidadHoraria
+                )
+                VALUES (?, ?, ?)
+            ";
+
+            $stmt = $conexion->prepare($sql);
+
+            $stmt->execute([
+                $_POST["nombre"],
+                $_POST["descripcion"],
+                $_POST["horas"]
+            ]);
+
+            $mensaje = "Asignatura registrada correctamente.";
+
+        } catch (PDOException $e) {
+
+            $error =
+                "Error registrando asignatura: "
+                . $e->getMessage();
+        }
+    }
+
+
+    /* ========================================================
+       INSERTAR CALIFICACION
+    ======================================================== */
+
+    if ($accion === "insertar_nota") {
+
+        try {
+
+            $sql = "
+                INSERT INTO Calificaciones
+                (
+                    IdEstudiante,
+                    IdAsignatura,
+                    IdPeriodo,
+                    Nota,
+                    Observacion
+                )
+                VALUES (?, ?, ?, ?, ?)
+            ";
+
+            $stmt = $conexion->prepare($sql);
+
+            $stmt->execute([
+                $_POST["estudiante"],
+                $_POST["asignatura"],
+                $_POST["periodo"],
+                $_POST["nota"],
+                $_POST["observacion"]
+            ]);
+
+            $mensaje =
+                "Calificacion registrada correctamente.";
+
+        } catch (PDOException $e) {
+
+            $error =
+                "Error registrando calificacion: "
+                . $e->getMessage();
+        }
+    }
+
+
+    /* ========================================================
+       EJECUTAR CONSULTA EDUCATIVA
+    ======================================================== */
+
+    if ($accion === "consulta") {
+
+        try {
+
+            $tipo = $_POST["tipo_consulta"] ?? "";
+
+            switch ($tipo) {
+
+                case "estudiantes":
+
+                    $sql = "
+                        SELECT *
+                        FROM Estudiantes
+                        ORDER BY Apellido
+                    ";
+
+                    break;
+
+
+                case "inner_grados":
+
+                    $sql = "
+                        SELECT
+                            E.IdEstudiante,
+                            E.Nombre,
+                            E.Apellido,
+                            G.NombreGrado,
+                            G.Jornada
+                        FROM Estudiantes E
+                        INNER JOIN Grados G
+                            ON E.IdGrado = G.IdGrado
+                        ORDER BY E.Apellido
+                    ";
+
+                    break;
+
+
+                case "left_notas":
+
+                    $sql = "
+                        SELECT
+                            E.IdEstudiante,
+                            E.Nombre,
+                            E.Apellido,
+                            C.Nota
+                        FROM Estudiantes E
+                        LEFT JOIN Calificaciones C
+                            ON E.IdEstudiante =
+                               C.IdEstudiante
+                        ORDER BY E.Apellido
+                    ";
+
+                    break;
+
+
+                case "padres":
+
+                    $sql = "
+                        SELECT
+                            E.Nombre AS Estudiante,
+                            E.Apellido AS ApellidoEstudiante,
+                            P.Nombre AS Padre,
+                            P.Apellido AS ApellidoPadre,
+                            P.Telefono
+                        FROM Estudiantes E
+                        INNER JOIN EstudiantesPadres EP
+                            ON E.IdEstudiante =
+                               EP.IdEstudiante
+                        INNER JOIN PadresFamilia P
+                            ON EP.IdPadre =
+                               P.IdPadre
+                        ORDER BY E.Apellido
+                    ";
+
+                    break;
+
+
+                case "profesores":
+
+                    $sql = "
+                        SELECT
+                            P.Nombre AS Profesor,
+                            P.Apellido,
+                            A.NombreAsignatura
+                        FROM Profesores P
+                        INNER JOIN ProfesoresAsignaturas PA
+                            ON P.IdProfesor =
+                               PA.IdProfesor
+                        INNER JOIN Asignaturas A
+                            ON PA.IdAsignatura =
+                               A.IdAsignatura
+                        ORDER BY P.Apellido
+                    ";
+
+                    break;
+
+
+                case "promedios":
+
+                    $sql = "
+                        SELECT
+                            E.Nombre,
+                            E.Apellido,
+                            AVG(C.Nota) AS Promedio
+                        FROM Estudiantes E
+                        INNER JOIN Calificaciones C
+                            ON E.IdEstudiante =
+                               C.IdEstudiante
+                        GROUP BY
+                            E.Nombre,
+                            E.Apellido
+                        ORDER BY Promedio DESC
+                    ";
+
+                    break;
+
+
+                case "sin_notas":
+
+                    $sql = "
+                        SELECT
+                            E.IdEstudiante,
+                            E.Nombre,
+                            E.Apellido
+                        FROM Estudiantes E
+                        LEFT JOIN Calificaciones C
+                            ON E.IdEstudiante =
+                               C.IdEstudiante
+                        WHERE C.IdCalificacion IS NULL
+                    ";
+
+                    break;
+
+
+                case "todos_profesores":
+
+                    $sql = "
+                        SELECT
+                            P.Nombre,
+                            P.Apellido,
+                            A.NombreAsignatura
+                        FROM Profesores P
+                        LEFT JOIN
+                            ProfesoresAsignaturas PA
+                            ON P.IdProfesor =
+                               PA.IdProfesor
+                        LEFT JOIN Asignaturas A
+                            ON PA.IdAsignatura =
+                               A.IdAsignatura
+                    ";
+
+                    break;
+
+
+                case "vista_estudiantes":
+
+                    $sql = "
+                        SELECT *
+                        FROM vw_EstudiantesGrados
+                    ";
+
+                    break;
+
+
+                case "vista_notas":
+
+                    $sql = "
+                        SELECT *
+                        FROM vw_NotasEstudiantes
+                    ";
+
+                    break;
+
+
+                default:
+
+                    $sql = "
+                        SELECT
+                            'Seleccione una consulta'
+                            AS Mensaje
+                    ";
+            }
+
+            ejecutarConsulta(
+                $conexion,
+                $sql
+            );
+
+        } catch (PDOException $e) {
+
+            $error =
+                "Error ejecutando consulta: "
+                . $e->getMessage();
+        }
+    }
+
+
+    /* ========================================================
+       PROCEDIMIENTOS ALMACENADOS
+    ======================================================== */
+
+    if ($accion === "procedimiento") {
+
+        try {
+
+            $procedimiento =
+                $_POST["procedimiento"] ?? "";
+
+            if ($procedimiento === "todos") {
+
+                ejecutarConsulta(
+                    $conexion,
+                    "EXEC sp_ListarEstudiantes"
+                );
+            }
+
+
+            if ($procedimiento === "buscar") {
+
+                $stmt = $conexion->prepare(
+                    "EXEC sp_BuscarEstudiante ?"
+                );
+
+                $stmt->execute([
+                    $_POST["id_estudiante"]
+                ]);
+
+                $resultados =
+                    $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+                if (!empty($resultados)) {
+                    $columnas =
+                        array_keys($resultados[0]);
+                }
+            }
+
+
+            if ($procedimiento === "notas") {
+
+                $stmt = $conexion->prepare(
+                    "EXEC sp_NotasEstudiante ?"
+                );
+
+                $stmt->execute([
+                    $_POST["id_estudiante"]
+                ]);
+
+                $resultados =
+                    $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+                if (!empty($resultados)) {
+                    $columnas =
+                        array_keys($resultados[0]);
+                }
+            }
+
+
+            if ($procedimiento === "grado") {
+
+                $stmt = $conexion->prepare(
+                    "EXEC sp_EstudiantesPorGrado ?"
+                );
+
+                $stmt->execute([
+                    $_POST["id_grado"]
+                ]);
+
+                $resultados =
+                    $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+                if (!empty($resultados)) {
+                    $columnas =
+                        array_keys($resultados[0]);
+                }
+            }
+
+        } catch (PDOException $e) {
+
+            $error =
+                "Error ejecutando procedimiento: "
+                . $e->getMessage();
+        }
+    }
+}
+
+
+/* ============================================================
+   6. CARGAR DATOS PARA LOS SELECT
+============================================================ */
+
+$estudiantes = $conexion
+    ->query("
+        SELECT IdEstudiante, Nombre, Apellido
+        FROM Estudiantes
+        ORDER BY Apellido
+    ")
+    ->fetchAll(PDO::FETCH_ASSOC);
+
+
+$grados = $conexion
+    ->query("
+        SELECT IdGrado, NombreGrado
+        FROM Grados
+        ORDER BY IdGrado
+    ")
+    ->fetchAll(PDO::FETCH_ASSOC);
+
+
+$asignaturas = $conexion
+    ->query("
+        SELECT IdAsignatura, NombreAsignatura
+        FROM Asignaturas
+        ORDER BY NombreAsignatura
+    ")
+    ->fetchAll(PDO::FETCH_ASSOC);
+
+
+$periodos = $conexion
+    ->query("
+        SELECT IdPeriodo, NombrePeriodo
+        FROM Periodos
+        ORDER BY IdPeriodo
+    ")
+    ->fetchAll(PDO::FETCH_ASSOC);
+
+
+/* ============================================================
+   7. DATOS PRINCIPALES
+============================================================ */
+
+$listaEstudiantes = $conexion
+    ->query("
+        SELECT
+            E.*,
+            G.NombreGrado
+        FROM Estudiantes E
+        INNER JOIN Grados G
+            ON E.IdGrado = G.IdGrado
+        ORDER BY E.Apellido
+    ")
+    ->fetchAll(PDO::FETCH_ASSOC);
+
+
+$listaProfesores = $conexion
+    ->query("
+        SELECT *
+        FROM Profesores
+        ORDER BY Apellido
+    ")
+    ->fetchAll(PDO::FETCH_ASSOC);
+
+
+$listaPadres = $conexion
+    ->query("
+        SELECT *
+        FROM PadresFamilia
+        ORDER BY Apellido
+    ")
+    ->fetchAll(PDO::FETCH_ASSOC);
+
+
+$listaAsignaturas = $conexion
+    ->query("
+        SELECT *
+        FROM Asignaturas
+        ORDER BY NombreAsignatura
+    ")
+    ->fetchAll(PDO::FETCH_ASSOC);
+
+?>
+<!DOCTYPE html>
+
+<html lang="es">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+>
+
+<title>Innovamente - SQL Server</title>
+
+
+<style>
+
+/* ============================================================
+   ESTILOS GENERALES
+============================================================ */
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+
+    margin: 0;
+
+    font-family:
+        Arial,
+        Helvetica,
+        sans-serif;
+
+    background: #f1f3f5;
+
+    color: #111827;
+}
+
+
+/* ============================================================
+   ENCABEZADO
+============================================================ */
+
+header {
+
+    background: #111827;
+
+    color: white;
+
+    padding: 18px 30px;
+
+    border-bottom:
+        4px solid #2563eb;
+}
+
+header h1 {
+
+    margin: 0;
+
+    font-size: 25px;
+}
+
+header p {
+
+    margin:
+        5px 0 0;
+
+    color: #cbd5e1;
+
+    font-size: 14px;
+}
+
+
+/* ============================================================
+   MENU
+============================================================ */
+
+nav {
+
+    background: white;
+
+    border-bottom:
+        1px solid #d1d5db;
+
+    padding: 10px 25px;
+
+    display: flex;
+
+    flex-wrap: wrap;
+
+    gap: 7px;
+}
+
+nav a {
+
+    text-decoration: none;
+
+    color: #111827;
+
+    background: #e5e7eb;
+
+    padding: 8px 12px;
+
+    border-radius: 4px;
+
+    font-size: 13px;
+}
+
+nav a:hover {
+
+    background: #2563eb;
+
+    color: white;
+}
+
+
+/* ============================================================
+   CONTENEDOR
+============================================================ */
+
+.container {
+
+    width: 94%;
+
+    max-width: 1400px;
+
+    margin:
+        25px auto;
+}
+
+
+/* ============================================================
+   TARJETAS
+============================================================ */
+
+.card {
+
+    background: white;
+
+    border:
+        1px solid #d1d5db;
+
+    border-radius: 5px;
+
+    padding: 20px;
+
+    margin-bottom: 20px;
+
+    box-shadow:
+        0 1px 2px rgba(0,0,0,.05);
+}
+
+.card h2 {
+
+    margin-top: 0;
+
+    color: #111827;
+
+    border-bottom:
+        2px solid #2563eb;
+
+    padding-bottom: 8px;
+}
+
+
+/* ============================================================
+   FORMULARIOS
+============================================================ */
+
+.form-grid {
+
+    display: grid;
+
+    grid-template-columns:
+        repeat(auto-fit, minmax(180px, 1fr));
+
+    gap: 12px;
+}
+
+label {
+
+    font-weight: bold;
+
+    font-size: 13px;
+
+    display: block;
+
+    margin-bottom: 5px;
+}
+
+input,
+select,
+textarea {
+
+    width: 100%;
+
+    padding: 9px;
+
+    border:
+        1px solid #9ca3af;
+
+    border-radius: 4px;
+
+    font-family: inherit;
+}
+
+textarea {
+
+    min-height: 70px;
+
+    resize: vertical;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+
+    outline: none;
+
+    border-color: #2563eb;
+}
+
+
+/* ============================================================
+   BOTONES
+============================================================ */
+
+button {
+
+    border: none;
+
+    background: #2563eb;
+
+    color: white;
+
+    padding: 9px 14px;
+
+    border-radius: 4px;
+
+    cursor: pointer;
+
+    margin-top: 10px;
+}
+
+button:hover {
+
+    background: #1d4ed8;
+}
+
+.btn-danger {
+
+    background: #374151;
+}
+
+.btn-danger:hover {
+
+    background: #111827;
+}
+
+
+/* ============================================================
+   MENSAJES
+============================================================ */
+
+.success {
+
+    background: #e5e7eb;
+
+    border-left:
+        5px solid #2563eb;
+
+    padding: 12px;
+
+    margin-bottom: 15px;
+}
+
+.error {
+
+    background: #f3f4f6;
+
+    border-left:
+        5px solid #111827;
+
+    padding: 12px;
+
+    margin-bottom: 15px;
+}
+
+
+/* ============================================================
+   TABLAS
+============================================================ */
+
+.table-container {
+
+    overflow-x: auto;
+}
+
+table {
+
+    width: 100%;
+
+    border-collapse: collapse;
+
+    margin-top: 12px;
+
+    font-size: 13px;
+}
+
+th {
+
+    background: #111827;
+
+    color: white;
+
+    padding: 9px;
+
+    text-align: left;
+}
+
+td {
+
+    border-bottom:
+        1px solid #d1d5db;
+
+    padding: 8px;
+}
+
+tr:nth-child(even) {
+
+    background: #f3f4f6;
+}
+
+
+/* ============================================================
+   CODIGO SQL
+============================================================ */
+
+.sql {
+
+    background: #111827;
+
+    color: #e5e7eb;
+
+    padding: 15px;
+
+    border-radius: 4px;
+
+    overflow-x: auto;
+
+    font-family:
+        Consolas,
+        monospace;
+
+    font-size: 13px;
+
+    white-space: pre-wrap;
+}
+
+
+/* ============================================================
+   ACTIVIDADES
+============================================================ */
+
+.activity {
+
+    border-left:
+        4px solid #2563eb;
+
+    padding:
+        10px 15px;
+
+    margin:
+        10px 0;
+
+    background: #f3f4f6;
+}
+
+.small {
+
+    font-size: 12px;
+
+    color: #6b7280;
+}
+
+
+/* ============================================================
+   RESPONSIVE
+============================================================ */
+
+@media(max-width:700px) {
+
+    .container {
+
+        width: 96%;
+    }
+
+    nav {
+
+        padding: 8px;
+    }
+
+    nav a {
+
+        font-size: 12px;
+    }
+}
+
+</style>
+
+</head>
+
+
+<body>
+
+
+<header>
+
+    <h1>INNOVAMENTE</h1>
+
+    <p>
+        Sistema educativo de gestión para jardín infantil
+        · PHP + SQL Server
+    </p>
+
+</header>
+
+
+<nav>
+
+    <a href="#inicio">Inicio</a>
+
+    <a href="#estudiantes">Estudiantes</a>
+
+    <a href="#profesores">Profesores</a>
+
+    <a href="#padres">Padres</a>
+
+    <a href="#asignaturas">Asignaturas</a>
+
+    <a href="#notas">Calificaciones</a>
+
+    <a href="#consultas">Consultas SQL</a>
+
+    <a href="#procedimientos">Procedimientos</a>
+
+</nav>
+
+
+<div class="container">
+
+
+<?php if ($mensaje): ?>
+
+    <div class="success">
+
+        <?= e($mensaje) ?>
+
+    </div>
+
+<?php endif; ?>
+
+
+<?php if ($error): ?>
+
+    <div class="error">
+
+        <?= e($error) ?>
+
+    </div>
+
+<?php endif; ?>
+
+
+<!-- =========================================================
+     INICIO
+========================================================= -->
+
+<section id="inicio" class="card">
+
+    <h2>Panel de aprendizaje SQL</h2>
+
+    <p>
+        Esta aplicación permite practicar operaciones
+        de bases de datos utilizando el sistema
+        Innovamente.
+    </p>
+
+    <div class="activity">
+
+        <strong>DDL</strong>
+
+        <p>
+            CREATE DATABASE, CREATE TABLE,
+            ALTER TABLE, PRIMARY KEY y FOREIGN KEY.
+        </p>
+
+    </div>
+
+    <div class="activity">
+
+        <strong>DML</strong>
+
+        <p>
+            INSERT, UPDATE, DELETE y SELECT.
+        </p>
+
+    </div>
+
+    <div class="activity">
+
+        <strong>Consultas</strong>
+
+        <p>
+            INNER JOIN, LEFT JOIN,
+            GROUP BY, AVG y COUNT.
+        </p>
+
+    </div>
+
+    <div class="activity">
+
+        <strong>Programación SQL</strong>
+
+        <p>
+            Vistas y procedimientos almacenados.
+        </p>
+
+    </div>
+
+</section>
+
+
+<!-- =========================================================
+     ESTUDIANTES
+========================================================= -->
+
+<section id="estudiantes" class="card">
+
+    <h2>Estudiantes</h2>
+
+    <p class="small">
+        CRUD básico: CREATE / READ / UPDATE / DELETE
+    </p>
+
+
+    <form method="POST">
+
+        <input
+            type="hidden"
+            name="accion"
+            value="insertar_estudiante"
+        >
+
+
+        <div class="form-grid">
+
+            <div>
+
+                <label>Nombre</label>
+
+                <input
+                    type="text"
+                    name="nombre"
+                    required
+                >
+
+            </div>
+
+
+            <div>
+
+                <label>Apellido</label>
+
+                <input
+                    type="text"
+                    name="apellido"
+                    required
+                >
+
+            </div>
+
+
+            <div>
+
+                <label>Documento</label>
+
+                <input
+                    type="text"
+                    name="documento"
+                >
+
+            </div>
+
+
+            <div>
+
+                <label>Fecha de nacimiento</label>
+
+                <input
+                    type="date"
+                    name="fecha"
+                    required
+                >
+
+            </div>
+
+
+            <div>
+
+                <label>Genero</label>
+
+                <select name="genero">
+
+                    <option value="M">M</option>
+
+                    <option value="F">F</option>
+
+                </select>
+
+            </div>
+
+
+            <div>
+
+                <label>Grado</label>
+
+                <select name="grado" required>
+
+                    <?php foreach ($grados as $grado): ?>
+
+                        <option
+                            value="<?= e($grado["IdGrado"]) ?>"
+                        >
+
+                            <?= e($grado["NombreGrado"]) ?>
+
+                        </option>
+
+                    <?php endforeach; ?>
+
+                </select>
+
+            </div>
+
+
+            <div>
+
+                <label>Direccion</label>
+
+                <input
+                    type="text"
+                    name="direccion"
+                >
+
+            </div>
+
+        </div>
+
+
+        <button type="submit">
+
+            Registrar estudiante
+
+        </button>
+
+    </form>
+
+
+    <h3>Estudiantes registrados</h3>
+
+
+    <div class="table-container">
+
+        <table>
+
+            <tr>
+
+                <th>ID</th>
+
+                <th>Nombre</th>
+
+                <th>Apellido</th>
+
+                <th>Documento</th>
+
+                <th>Fecha nacimiento</th>
+
+                <th>Genero</th>
+
+                <th>Grado</th>
+
+                <th>Accion</th>
+
+            </tr>
+
+
+            <?php foreach ($listaEstudiantes as $e): ?>
+
+                <tr>
+
+                    <td><?= e($e["IdEstudiante"]) ?></td>
+
+                    <td><?= e($e["Nombre"]) ?></td>
+
+                    <td><?= e($e["Apellido"]) ?></td>
+
+                    <td><?= e($e["Documento"]) ?></td>
+
+                    <td><?= e($e["FechaNacimiento"]) ?></td>
+
+                    <td><?= e($e["Genero"]) ?></td>
+
+                    <td><?= e($e["NombreGrado"]) ?></td>
+
+                    <td>
+
+                        <form
+                            method="POST"
+                            onsubmit="
+                                return confirm(
+                                '¿Eliminar estudiante?'
+                                );
+                            "
+                        >
+
+                            <input
+                                type="hidden"
+                                name="accion"
+                                value="eliminar_estudiante"
+                            >
+
+                            <input
+                                type="hidden"
+                                name="id"
+                                value="<?= e($e["IdEstudiante"]) ?>"
+                            >
+
+                            <button
+                                type="submit"
+                                class="btn-danger"
+                            >
+                                Eliminar
+                            </button>
+
+                        </form>
+
+                    </td>
+
+                </tr>
+
+            <?php endforeach; ?>
+
+        </table>
+
+    </div>
+
+</section>
+
+
+<!-- =========================================================
+     PROFESORES
+========================================================= -->
+
+<section id="profesores" class="card">
+
+    <h2>Profesores</h2>
+
+
+    <form method="POST">
+
+        <input
+            type="hidden"
+            name="accion"
+            value="insertar_profesor"
+        >
+
+
+        <div class="form-grid">
+
+            <div>
+
+                <label>Nombre</label>
+
+                <input
+                    name="nombre"
+                    required
+                >
+
+            </div>
+
+
+            <div>
+
+                <label>Apellido</label>
+
+                <input
+                    name="apellido"
+                    required
+                >
+
+            </div>
+
+
+            <div>
+
+                <label>Documento</label>
+
+                <input
+                    name="documento"
+                    required
+                >
+
+            </div>
+
+
+            <div>
+
+                <label>Especialidad</label>
+
+                <input
+                    name="especialidad"
+                >
+
+            </div>
+
+
+            <div>
+
+                <label>Telefono</label>
+
+                <input
+                    name="telefono"
+                >
+
+            </div>
+
+
+            <div>
+
+                <label>Correo</label>
+
+                <input
+                    type="email"
+                    name="correo"
+                >
+
+            </div>
+
+
+            <div>
+
+                <label>Fecha de ingreso</label>
+
+                <input
+                    type="date"
+                    name="fecha"
+                    required
+                >
+
+            </div>
+
+        </div>
+
+
+        <button>
+
+            Registrar profesor
+
+        </button>
+
+    </form>
+
+
+    <div class="table-container">
+
+        <table>
+
+            <tr>
+
+                <th>ID</th>
+
+                <th>Nombre</th>
+
+                <th>Apellido</th>
+
+                <th>Especialidad</th>
+
+                <th>Telefono</th>
+
+                <th>Correo</th>
+
+                <th>Accion</th>
+
+            </tr>
+
+
+            <?php foreach ($listaProfesores as $p): ?>
+
+                <tr>
+
+                    <td><?= e($p["IdProfesor"]) ?></td>
+
+                    <td><?= e($p["Nombre"]) ?></td>
+
+                    <td><?= e($p["Apellido"]) ?></td>
+
+                    <td><?= e($p["Especialidad"]) ?></td>
+
+                    <td><?= e($p["Telefono"]) ?></td>
+
+                    <td><?= e($p["Correo"]) ?></td>
+
+                    <td>
+
+                        <form method="POST">
+
+                            <input
+                                type="hidden"
+                                name="accion"
+                                value="eliminar_profesor"
+                            >
+
+                            <input
+                                type="hidden"
+                                name="id"
+                                value="<?= e($p["IdProfesor"]) ?>"
+                            >
+
+                            <button
+                                class="btn-danger"
+                                onclick="
+                                return confirm(
+                                '¿Eliminar profesor?'
+                                )"
+                            >
+                                Eliminar
+                            </button>
+
+                        </form>
+
+                    </td>
+
+                </tr>
+
+            <?php endforeach; ?>
+
+        </table>
+
+    </div>
+
+</section>
+
+
+<!-- =========================================================
+     PADRES
+========================================================= -->
+
+<section id="padres" class="card">
+
+    <h2>Padres de familia</h2>
+
+
+    <form method="POST">
+
+        <input
+            type="hidden"
+            name="accion"
+            value="insertar_padre"
+        >
+
+
+        <div class="form-grid">
+
+            <div>
+
+                <label>Nombre</label>
+
+                <input
+                    name="nombre"
+                    required
+                >
+
+            </div>
+
+
+            <div>
+
+                <label>Apellido</label>
+
+                <input
+                    name="apellido"
+                    required
+                >
+
+            </div>
+
+
+            <div>
+
+                <label>Documento</label>
+
+                <input
+                    name="documento"
+                    required
+                >
+
+            </div>
+
+
+            <div>
+
+                <label>Telefono</label>
+
+                <input
+                    name="telefono"
+                >
+
+            </div>
+
+
+            <div>
+
+                <label>Correo</label>
+
+                <input
+                    type="email"
+                    name="correo"
+                >
+
+            </div>
+
+
+            <div>
+
+                <label>Parentesco</label>
+
+                <select name="parentesco">
+
+                    <option>Padre</option>
+
+                    <option>Madre</option>
+
+                    <option>Acudiente</option>
+
+                    <option>Abuelo</option>
+
+                </select>
+
+            </div>
+
+        </div>
+
+
+        <button>
+
+            Registrar padre
+
+        </button>
+
+    </form>
+
+
+    <div class="table-container">
+
+        <table>
+
+            <tr>
+
+                <th>ID</th>
+
+                <th>Nombre</th>
+
+                <th>Apellido</th>
+
+                <th>Documento</th>
+
+                <th>Telefono</th>
+
+                <th>Correo</th>
+
+                <th>Parentesco</th>
+
+                <th>Accion</th>
+
+            </tr>
+
+
+            <?php foreach ($listaPadres as $p): ?>
+
+                <tr>
+
+                    <td><?= e($p["IdPadre"]) ?></td>
+
+                    <td><?= e($p["Nombre"]) ?></td>
+
+                    <td><?= e($p["Apellido"]) ?></td>
+
+                    <td><?= e($p["Documento"]) ?></td>
+
+                    <td><?= e($p["Telefono"]) ?></td>
+
+                    <td><?= e($p["Correo"]) ?></td>
+
+                    <td><?= e($p["Parentesco"]) ?></td>
+
+                    <td>
+
+                        <form method="POST">
+
+                            <input
+                                type="hidden"
+                                name="accion"
+                                value="eliminar_padre"
+                            >
+
+                            <input
+                                type="hidden"
+                                name="id"
+                                value="<?= e($p["IdPadre"]) ?>"
+                            >
+
+                            <button
+                                class="btn-danger"
+                                onclick="
+                                return confirm(
+                                '¿Eliminar padre?'
+                                )"
+                            >
+                                Eliminar
+                            </button>
+
+                        </form>
+
+                    </td>
+
+                </tr>
+
+            <?php endforeach; ?>
+
+        </table>
+
+    </div>
+
+</section>
+
+
+<!-- =========================================================
+     ASIGNATURAS
+========================================================= -->
+
+<section id="asignaturas" class="card">
+
+    <h2>Asignaturas</h2>
+
+
+    <form method="POST">
+
+        <input
+            type="hidden"
+            name="accion"
+            value="insertar_asignatura"
+        >
+
+
+        <div class="form-grid">
+
+            <div>
+
+                <label>Nombre</label>
+
+                <input
+                    name="nombre"
+                    required
+                >
+
+            </div>
+
+
+            <div>
+
+                <label>Descripcion</label>
+
+                <input
+                    name="descripcion"
+                >
+
+            </div>
+
+
+            <div>
+
+                <label>Intensidad horaria</label>
+
+                <input
+                    type="number"
+                    name="horas"
+                    min="1"
+                    max="20"
+                >
+
+            </div>
+
+        </div>
+
+
+        <button>
+
+            Registrar asignatura
+
+        </button>
+
+    </form>
+
+
+    <div class="table-container">
+
+        <table>
+
+            <tr>
+
+                <th>ID</th>
+
+                <th>Asignatura</th>
+
+                <th>Descripcion</th>
+
+                <th>Horas</th>
+
+            </tr>
+
+
+            <?php foreach ($listaAsignaturas as $a): ?>
+
+                <tr>
+
+                    <td><?= e($a["IdAsignatura"]) ?></td>
+
+                    <td><?= e($a["NombreAsignatura"]) ?></td>
+
+                    <td><?= e($a["Descripcion"]) ?></td>
+
+                    <td><?= e($a["IntensidadHoraria"]) ?></td>
+
+                </tr>
+
+            <?php endforeach; ?>
+
+        </table>
+
+    </div>
+
+</section>
+
+
+<!-- =========================================================
+     CALIFICACIONES
+========================================================= -->
+
+<section id="notas" class="card">
+
+    <h2>Registrar calificacion</h2>
+
+
+    <form method="POST">
+
+        <input
+            type="hidden"
+            name="accion"
+            value="insertar_nota"
+        >
+
+
+        <div class="form-grid">
+
+            <div>
+
+                <label>Estudiante</label>
+
+                <select name="estudiante">
+
+                    <?php foreach ($estudiantes as $e): ?>
+
+                        <option
+                            value="<?= e($e["IdEstudiante"]) ?>"
+                        >
+
+                            <?= e(
+                                $e["Apellido"]
+                                . ", "
+                                . $e["Nombre"]
+                            ) ?>
+
+                        </option>
+
+                    <?php endforeach; ?>
+
+                </select>
+
+            </div>
+
+
+            <div>
+
+                <label>Asignatura</label>
+
+                <select name="asignatura">
+
+                    <?php foreach ($asignaturas as $a): ?>
+
+                        <option
+                            value="<?= e($a["IdAsignatura"]) ?>"
+                        >
+
+                            <?= e(
+                                $a["NombreAsignatura"]
+                            ) ?>
+
+                        </option>
+
+                    <?php endforeach; ?>
+
+                </select>
+
+            </div>
+
+
+            <div>
+
+                <label>Periodo</label>
+
+                <select name="periodo">
+
+                    <?php foreach ($periodos as $p): ?>
+
+                        <option
+                            value="<?= e($p["IdPeriodo"]) ?>"
+                        >
+
+                            <?= e(
+                                $p["NombrePeriodo"]
+                            ) ?>
+
+                        </option>
+
+                    <?php endforeach; ?>
+
+                </select>
+
+            </div>
+
+
+            <div>
+
+                <label>Nota</label>
+
+                <input
+                    type="number"
+                    name="nota"
+                    min="1"
+                    max="5"
+                    step="0.01"
+                    required
+                >
+
+            </div>
+
+
+            <div>
+
+                <label>Observacion</label>
+
+                <input
+                    name="observacion"
+                >
+
+            </div>
+
+        </div>
+
+
+        <button>
+
+            Registrar nota
+
+        </button>
+
+    </form>
+
+</section>
+
+
+<!-- =========================================================
+     CONSULTAS SQL
+========================================================= -->
+
+<section id="consultas" class="card">
+
+    <h2>Actividades SQL</h2>
+
+    <p>
+        Selecciona una consulta para observar
+        cómo funciona SQL Server.
+    </p>
+
+
+    <form method="POST">
+
+        <input
+            type="hidden"
+            name="accion"
+            value="consulta"
+        >
+
+
+        <select name="tipo_consulta">
+
+            <option value="estudiantes">
+
+                SELECT - Todos los estudiantes
+
+            </option>
+
+
+            <option value="inner_grados">
+
+                INNER JOIN - Estudiantes y grados
+
+            </option>
+
+
+            <option value="left_notas">
+
+                LEFT JOIN - Estudiantes y notas
+
+            </option>
+
+
+            <option value="padres">
+
+                INNER JOIN - Estudiantes y padres
+
+            </option>
+
+
+            <option value="profesores">
+
+                INNER JOIN - Profesores y asignaturas
+
+            </option>
+
+
+            <option value="promedios">
+
+                GROUP BY - Promedio de estudiantes
+
+            </option>
+
+
+            <option value="sin_notas">
+
+                LEFT JOIN - Estudiantes sin notas
+
+            </option>
+
+
+            <option value="todos_profesores">
+
+                LEFT JOIN - Todos los profesores
+
+            </option>
+
+
+            <option value="vista_estudiantes">
+
+                VIEW - Estudiantes y grados
+
+            </option>
+
+
+            <option value="vista_notas">
+
+                VIEW - Calificaciones
+
+            </option>
+
+        </select>
+
+
+        <button>
+
+            Ejecutar consulta
+
+        </button>
+
+    </form>
+
+
+    <?php if (!empty($resultados)): ?>
+
+        <div class="table-container">
+
+            <table>
+
+                <tr>
+
+                    <?php foreach ($columnas as $columna): ?>
+
+                        <th>
+
+                            <?= e($columna) ?>
+
+                        </th>
+
+                    <?php endforeach; ?>
+
+                </tr>
+
+
+                <?php foreach ($resultados as $fila): ?>
+
+                    <tr>
+
+                        <?php foreach ($columnas as $columna): ?>
+
+                            <td>
+
+                                <?= e(
+                                    $fila[$columna]
+                                ) ?>
+
+                            </td>
+
+                        <?php endforeach; ?>
+
+                    </tr>
+
+                <?php endforeach; ?>
+
+            </table>
+
+        </div>
+
+    <?php endif; ?>
+
+</section>
+
+
+<!-- =========================================================
+     PROCEDIMIENTOS
+========================================================= -->
+
+<section id="procedimientos" class="card">
+
+    <h2>Procedimientos almacenados</h2>
+
+
+    <form method="POST">
+
+        <input
+            type="hidden"
+            name="accion"
+            value="procedimiento"
+        >
+
+
+        <label>
+
+            Procedimiento
+
+        </label>
+
+
+        <select
+            name="procedimiento"
+            id="procedimiento"
+            onchange="mostrarParametros()"
+        >
+
+            <option value="todos">
+
+                sp_ListarEstudiantes
+
+            </option>
+
+
+            <option value="buscar">
+
+                sp_BuscarEstudiante
+
+            </option>
+
+
+            <option value="notas">
+
+                sp_NotasEstudiante
+
+            </option>
+
+
+            <option value="grado">
+
+                sp_EstudiantesPorGrado
+
+            </option>
+
+        </select>
+
+
+        <div
+            id="parametros"
+            style="margin-top:15px"
+        >
+
+            <div id="paramEstudiante">
+
+                <label>
+
+                    ID del estudiante
+
+                </label>
+
+                <select name="id_estudiante">
+
+                    <?php foreach ($estudiantes as $e): ?>
+
+                        <option
+                            value="<?= e(
+                                $e["IdEstudiante"]
+                            ) ?>"
+                        >
+
+                            <?= e(
+                                $e["IdEstudiante"]
+                                . " - "
+                                . $e["Apellido"]
+                                . " "
+                                . $e["Nombre"]
+                            ) ?>
+
+                        </option>
+
+                    <?php endforeach; ?>
+
+                </select>
+
+            </div>
+
+
+            <div
+                id="paramGrado"
+                style="display:none"
+            >
+
+                <label>
+
+                    Grado
+
+                </label>
+
+                <select name="id_grado">
+
+                    <?php foreach ($grados as $g): ?>
+
+                        <option
+                            value="<?= e(
+                                $g["IdGrado"]
+                            ) ?>"
+                        >
+
+                            <?= e(
+                                $g["IdGrado"]
+                                . " - "
+                                . $g["NombreGrado"]
+                            ) ?>
+
+                        </option>
+
+                    <?php endforeach; ?>
+
+                </select>
+
+            </div>
+
+        </div>
+
+
+        <button>
+
+            Ejecutar procedimiento
+
+        </button>
+
+    </form>
+
+
+    <div class="sql">
+
+EXEC sp_ListarEstudiantes;
+
+EXEC sp_BuscarEstudiante 5;
+
+EXEC sp_NotasEstudiante 1;
+
+EXEC sp_EstudiantesPorGrado 3;
+
+    </div>
+
+</section>
+
+
+<!-- =========================================================
+     ACTIVIDADES PARA ESTUDIANTES
+========================================================= -->
+
+<section class="card">
+
+    <h2>Retos de aprendizaje</h2>
+
+
+    <div class="activity">
+
+        <strong>Reto 1 - INSERT</strong>
+
+        <p>
+            Registra un nuevo estudiante desde el formulario.
+        </p>
+
+    </div>
+
+
+    <div class="activity">
+
+        <strong>Reto 2 - UPDATE</strong>
+
+        <p>
+            Modifica directamente en SQL el teléfono
+            de un padre de familia.
+        </p>
+
+        <div class="sql">
+
+UPDATE PadresFamilia
+SET Telefono = '3009999999'
+WHERE IdPadre = 1;
+
+        </div>
+
+    </div>
+
+
+    <div class="activity">
+
+        <strong>Reto 3 - INNER JOIN</strong>
+
+        <p>
+            Obtén el nombre del estudiante
+            y el nombre de su grado.
+        </p>
+
+        <div class="sql">
+
+SELECT
+    E.Nombre,
+    E.Apellido,
+    G.NombreGrado
+FROM Estudiantes E
+INNER JOIN Grados G
+    ON E.IdGrado = G.IdGrado;
+
+        </div>
+
+    </div>
+
+
+    <div class="activity">
+
+        <strong>Reto 4 - LEFT JOIN</strong>
+
+        <p>
+            Encuentra los estudiantes que
+            todavía no tienen calificaciones.
+        </p>
+
+        <div class="sql">
+
+SELECT
+    E.Nombre,
+    E.Apellido
+FROM Estudiantes E
+LEFT JOIN Calificaciones C
+    ON E.IdEstudiante = C.IdEstudiante
+WHERE C.IdCalificacion IS NULL;
+
+        </div>
+
+    </div>
+
+
+    <div class="activity">
+
+        <strong>Reto 5 - GROUP BY</strong>
+
+        <p>
+            Calcula cuántos estudiantes hay
+            en cada grado.
+        </p>
+
+        <div class="sql">
+
+SELECT
+    G.NombreGrado,
+    COUNT(E.IdEstudiante) AS Cantidad
+FROM Grados G
+LEFT JOIN Estudiantes E
+    ON G.IdGrado = E.IdGrado
+GROUP BY G.NombreGrado;
+
+        </div>
+
+    </div>
+
+
+    <div class="activity">
+
+        <strong>Reto 6 - PROMEDIOS</strong>
+
+        <p>
+            Obtén el promedio de cada estudiante.
+        </p>
+
+        <div class="sql">
+
+SELECT
+    E.Nombre,
+    E.Apellido,
+    AVG(C.Nota) AS Promedio
+FROM Estudiantes E
+INNER JOIN Calificaciones C
+    ON E.IdEstudiante = C.IdEstudiante
+GROUP BY
+    E.Nombre,
+    E.Apellido;
+
+        </div>
+
+    </div>
+
+
+    <div class="activity">
+
+        <strong>Reto 7 - PROCEDIMIENTO</strong>
+
+        <p>
+            Ejecuta un procedimiento almacenado
+            para consultar las notas de un estudiante.
+        </p>
+
+        <div class="sql">
+
+EXEC sp_NotasEstudiante 1;
+
+        </div>
+
+    </div>
+
+</section>
+
+
+</div>
+
+
+<script>
+
+/* ============================================================
+   MOSTRAR PARAMETROS DE PROCEDIMIENTOS
+============================================================ */
+
+function mostrarParametros() {
+
+    const procedimiento =
+        document.getElementById(
+            "procedimiento"
+        ).value;
+
+    const estudiante =
+        document.getElementById(
+            "paramEstudiante"
+        );
+
+    const grado =
+        document.getElementById(
+            "paramGrado"
+        );
+
+
+    estudiante.style.display = "none";
+
+    grado.style.display = "none";
+
+
+    if (
+        procedimiento === "buscar" ||
+        procedimiento === "notas"
+    ) {
+
+        estudiante.style.display = "block";
+
+    }
+
+
+    if (
+        procedimiento === "grado"
+    ) {
+
+        grado.style.display = "block";
+
+    }
+
+}
+
+</script>
+
+
+</body>
+
+</html>
