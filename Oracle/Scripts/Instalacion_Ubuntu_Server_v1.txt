@@ -1,0 +1,238 @@
+**********************************
+SQL DEVELOPER
+**********************************
+
+https://www.oracle.com/database/sqldeveloper/?utm_source=chatgpt.com
+(GUI)
+
+https://www.oracle.com/database/technologies/appdev/sql.html?utm_source=chatgpt.com
+(Consola)
+
+**********************************
+INSTALACION ORACLE DB
+**********************************
+
+# ============================================================
+# INSTALACION DE ORACLE DATABASE FREE EN UBUNTU SERVER 24.04
+# Metodo: Podman y contenedor oficial de Oracle
+# Objetivo: Crear un servidor Oracle para practicas escolares
+# ============================================================
+
+# 1. Verificar la version de Ubuntu instalada.
+lsb_release -a
+
+# 2. Comprobar la arquitectura del servidor.
+uname -m
+
+# 3. Consultar procesador, memoria RAM y almacenamiento disponible.
+lscpu
+free -h
+df -h
+
+# 4. Consultar la direccion IP del servidor.
+# Esta IP se utilizara para conectar desde Windows.
+hostname -I
+
+# 5. Actualizar la lista de paquetes de Ubuntu.
+sudo apt update
+
+# 6. Instalar las actualizaciones disponibles.
+sudo apt upgrade -y
+
+# 7. Reiniciar el servidor si las actualizaciones lo requieren.
+sudo reboot
+
+# 8. Instalar Podman, herramienta para ejecutar contenedores.
+sudo apt install -y podman
+
+# 9. Verificar la instalacion y configuracion de Podman.
+podman --version
+sudo podman info
+
+# 10. Consultar el repositorio oficial de Oracle Database Free.
+# https://container-registry.oracle.com/ords/ocr/ba/database/free
+
+# 11. Iniciar sesion en el registro oficial de Oracle.
+# Es posible que deba aceptar los terminos de uso previamente.
+sudo podman login container-registry.oracle.com
+
+# 12. Solicitar una contrasena sin mostrarla en pantalla.
+read -rsp "Ingrese una contraseña segura para Oracle: " ORACLE_DB_PASSWORD
+echo
+
+# 13. Crear un secreto para proporcionar la contrasena al contenedor.
+printf '%s' "$ORACLE_DB_PASSWORD" | sudo podman secret create oracle_pwd -
+
+# 14. Eliminar la variable temporal que contenia la contrasena.
+unset ORACLE_DB_PASSWORD
+
+# 15. Comprobar que el secreto fue creado.
+sudo podman secret ls
+
+# 16. Descargar la imagen oficial de Oracle Database Free.
+# La etiqueta latest puede cambiar; para instalaciones estables,
+# seleccione una etiqueta de version publicada por Oracle.
+sudo podman pull container-registry.oracle.com/database/free:latest
+
+# 17. Comprobar las imagenes descargadas.
+sudo podman images
+
+# 18. Crear y ejecutar el contenedor de Oracle.
+# El puerto 1521 permite conexiones desde clientes SQL.
+# El volumen conserva los archivos de la base de datos.
+# El secreto proporciona la contrasena inicial.
+sudo podman run -d \
+  --name oracle-free \
+  --publish 1521:1521 \
+  --secret=oracle_pwd \
+  --volume oracle-free-data:/opt/oracle/oradata \
+  --restart=unless-stopped \
+  container-registry.oracle.com/database/free:latest
+
+# 19. Verificar que el contenedor esta ejecutandose.
+sudo podman ps
+
+# 20. Consultar todos los contenedores, incluidos los detenidos.
+sudo podman ps -a
+
+# 21. Consultar los mensajes de inicio hasta que Oracle este listo.
+# Para salir de la visualizacion, pulsar Ctrl+C.
+sudo podman logs -f oracle-free
+
+# 22. Consultar los ultimos mensajes si Oracle presenta errores.
+sudo podman logs --tail=200 oracle-free
+
+# 23. Acceder a SQL*Plus como administrador local de Oracle.
+sudo podman exec -it oracle-free sqlplus / as sysdba
+
+# ============================================================
+# COMANDOS SQL: EJECUTAR DENTRO DE SQL*PLUS
+# ============================================================
+
+-- 24. Consultar las bases de datos conectables y su estado.
+SELECT name, open_mode FROM v$pdbs;
+
+-- 25. Consultar la version instalada de Oracle.
+SELECT banner FROM v$version;
+
+-- 26. Seleccionar el servicio conectable FREEPDB1.
+-- Verifique primero que este nombre exista en su instalacion.
+ALTER SESSION SET CONTAINER = FREEPDB1;
+
+-- 27. Confirmar el contenedor actual.
+SHOW CON_NAME;
+
+-- 28. Crear el usuario para las practicas escolares.
+-- Cambie la contrasena de ejemplo antes de ejecutar.
+CREATE USER colegio
+IDENTIFIED BY "Cambiar_Esta_Clave_123"
+DEFAULT TABLESPACE USERS
+TEMPORARY TABLESPACE TEMP
+QUOTA 200M ON USERS;
+
+-- 29. Conceder permisos para conectarse y crear objetos.
+GRANT CREATE SESSION,
+      CREATE TABLE,
+      CREATE VIEW,
+      CREATE SEQUENCE,
+      CREATE PROCEDURE
+TO colegio;
+
+-- 30. Salir de SQL*Plus.
+EXIT;
+
+# ============================================================
+# CONFIGURACION DEL FIREWALL DE UBUNTU
+# ============================================================
+
+# 31. Consultar el estado actual del firewall.
+sudo ufw status verbose
+
+# 32. Permitir conexiones SSH para administrar el servidor.
+# Si utiliza un puerto SSH personalizado, configure ese puerto.
+sudo ufw allow OpenSSH
+
+# 33. Permitir conexiones Oracle desde la red local del colegio.
+# Sustituya 192.168.1.0/24 por la subred real de su institucion.
+sudo ufw allow from 192.168.1.0/24 to any port 1521 proto tcp
+
+# 34. Activar el firewall despues de comprobar las reglas.
+sudo ufw enable
+
+# 35. Verificar las reglas del firewall.
+sudo ufw status numbered
+
+# ============================================================
+# CONEXION DESDE WINDOWS CON SQL DEVELOPER
+# ============================================================
+
+# 36. Configurar los siguientes datos en SQL Developer:
+# Usuario: COLEGIO
+# Contrasena: la configurada para el usuario COLEGIO
+# Host: direccion IP real del servidor Ubuntu
+# Puerto: 1521
+# Tipo de conexion: Basic
+# Tipo de identificacion: Service name
+# Servicio: FREEPDB1
+
+# 37. En PowerShell de Windows, comprobar la conectividad.
+# Reemplazar la IP de ejemplo por la direccion real del servidor.
+# Ejecutar este comando en Windows, no en Ubuntu.
+# Test-NetConnection 192.168.1.50 -Port 1521
+
+# ============================================================
+# PRUEBA DE FUNCIONAMIENTO: EJECUTAR COMO USUARIO COLEGIO
+# ============================================================
+
+-- 38. Crear una tabla para verificar los permisos.
+CREATE TABLE prueba_oracle (
+    id NUMBER GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY,
+    mensaje VARCHAR2(100)
+);
+
+-- 39. Insertar un registro de prueba.
+INSERT INTO prueba_oracle (mensaje)
+VALUES ('Oracle funciona correctamente');
+
+-- 40. Consultar los registros insertados.
+SELECT * FROM prueba_oracle;
+
+-- 41. Confirmar los cambios.
+COMMIT;
+
+# ============================================================
+# COMANDOS DE ADMINISTRACION DEL CONTENEDOR
+# ============================================================
+
+# 42. Consultar si Oracle esta ejecutandose.
+sudo podman ps
+
+# 43. Detener Oracle sin eliminar el volumen de datos.
+sudo podman stop oracle-free
+
+# 44. Iniciar nuevamente Oracle.
+sudo podman start oracle-free
+
+# 45. Reiniciar el contenedor.
+sudo podman restart oracle-free
+
+# 46. Consultar el volumen persistente de la base de datos.
+sudo podman volume inspect oracle-free-data
+
+# ============================================================
+# DOCUMENTACION OFICIAL
+# ============================================================
+# Registro Oracle:
+# https://container-registry.oracle.com/ords/ocr/ba/database/free
+#
+# Guia de instalacion:
+# https://docs.oracle.com/en/database/oracle/oracle-database/26/xeinl/installing-oracle-database-free.html
+#
+# Repositorio oficial:
+# https://github.com/oracle/docker-images
+#
+# IMPORTANTE:
+# No exponga el puerto 1521 directamente a Internet.
+# Use contrasenas seguras y realice copias de seguridad.
+# No elimine el volumen oracle-free-data sin respaldo.
+# ============================================================

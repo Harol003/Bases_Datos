@@ -1,0 +1,283 @@
+
+# ============================================================
+# ORACLE DATABASE FREE EN WINDOWS
+# GUÍA DE INSTALACIÓN Y CONFIGURACIÓN
+# ============================================================
+#
+# IMPORTANTE:
+# Los comandos de PowerShell se ejecutan en PowerShell.
+# Los comandos SQL se ejecutan dentro de SQL*Plus.
+# No copies todo el bloque de una sola vez en la terminal.
+#
+# ============================================================
+# 1. VERIFICAR LA VERSIÓN DE WINDOWS
+# ============================================================
+
+# Muestra información general del sistema operativo.
+Get-ComputerInfo | Select-Object WindowsProductName, WindowsVersion, OsArchitecture
+
+# Comprueba si Windows es de 64 bits.
+[Environment]::Is64BitOperatingSystem
+
+# Muestra la memoria RAM instalada y disponible.
+Get-CimInstance Win32_OperatingSystem |
+Select-Object TotalVisibleMemorySize, FreePhysicalMemory
+
+# Consulta el espacio libre de las unidades de disco.
+Get-PSDrive -PSProvider FileSystem
+
+# ============================================================
+# 2. DESCARGAR E INSTALAR ORACLE
+# ============================================================
+#
+# Descargar el instalador desde:
+# https://www.oracle.com/database/free/get-started/
+#
+# 1. Seleccionar Oracle AI Database Free para Windows x64.
+# 2. Descargar el archivo ZIP oficial.
+# 3. Extraer el ZIP en una carpeta temporal.
+# 4. Abrir la carpeta extraída.
+# 5. Ejecutar setup.exe con privilegios de administrador.
+# 6. Aceptar los términos de licencia.
+# 7. Seguir las instrucciones del instalador.
+# 8. Definir y guardar una contraseña segura para las cuentas
+#    administrativas que solicite el instalador.
+# 9. Esperar a que finalice la instalación y creación de la base.
+#
+# IMPORTANTE:
+# No desinstales una instalación Oracle existente sin verificar
+# primero si contiene bases de datos o información que necesitas.
+#
+# ============================================================
+# 3. VERIFICAR LOS SERVICIOS DE ORACLE
+# ============================================================
+
+# Busca servicios de Windows relacionados con Oracle.
+Get-Service *Oracle*
+
+# Busca los servicios que contienen FREE o LISTENER en el nombre.
+Get-Service |
+Where-Object {
+    $_.Name -match "Oracle.*(FREE|LISTENER)" -or
+    $_.DisplayName -match "Oracle.*(FREE|LISTENER)"
+}
+
+# Comprueba si el puerto predeterminado 1521 está escuchando.
+Get-NetTCPConnection -LocalPort 1521 -State Listen -ErrorAction SilentlyContinue
+
+# ============================================================
+# 4. VERIFICAR LAS HERRAMIENTAS DE ORACLE
+# ============================================================
+#
+# Ejecutar en PowerShell.
+# Busca si SQL*Plus está disponible en la variable PATH.
+
+where.exe sqlplus
+
+# Busca si la utilidad de administración del listener está disponible.
+where.exe lsnrctl
+
+# Si no se encuentran los comandos, comprueba la carpeta de
+# instalación de Oracle y la variable PATH antes de continuar.
+$env:PATH -split ";" | Where-Object { $_ -match "Oracle" }
+
+# ============================================================
+# 5. CONSULTAR EL ESTADO DEL LISTENER
+# ============================================================
+#
+# Ejecutar en CMD o PowerShell si lsnrctl está disponible.
+# El listener recibe las conexiones de los clientes Oracle.
+
+lsnrctl status
+
+# ============================================================
+# 6. PROBAR LA CONEXIÓN LOCAL
+# ============================================================
+#
+# Ejecutar en CMD o PowerShell si SQL*Plus está disponible.
+# El siguiente comando solicita autenticación administrativa
+# mediante la autenticación local de Oracle.
+
+sqlplus / as sysdba
+
+# ============================================================
+# 7. CONSULTAR LA BASE DE DATOS
+# ============================================================
+#
+# LOS SIGUIENTES COMANDOS SON SQL.
+# Ejecutarlos dentro de SQL*Plus, después de conectarse.
+#
+# Muestra la versión de Oracle instalada.
+SELECT banner FROM v$version;
+
+# Muestra el nombre de la base de datos.
+SELECT name FROM v$database;
+
+# Muestra el contenedor actual.
+SHOW CON_NAME;
+
+# Muestra las bases de datos conectables disponibles.
+SELECT name, open_mode FROM v$pdbs;
+
+# Cambia al contenedor de usuarios de la base Free.
+ALTER SESSION SET CONTAINER = FREEPDB1;
+
+# Verifica el contenedor seleccionado.
+SHOW CON_NAME;
+
+# ============================================================
+# 8. CREAR UN USUARIO PARA EL PROYECTO ESCOLAR
+# ============================================================
+#
+# Ejecutar conectado como administrador y dentro de FREEPDB1.
+# Cambia la contraseña de ejemplo por una contraseña propia,
+# segura y diferente de la contraseña administrativa.
+#
+# Crea el usuario COLEGIO y le asigna espacio en USERS.
+
+CREATE USER colegio
+IDENTIFIED BY "Cambiar_Esta_Clave_123"
+DEFAULT TABLESPACE USERS
+TEMPORARY TABLESPACE TEMP
+QUOTA 200M ON USERS;
+
+# Permite al usuario conectarse a la base de datos.
+GRANT CREATE SESSION TO colegio;
+
+# Permite crear tablas.
+GRANT CREATE TABLE TO colegio;
+
+# Permite crear vistas.
+GRANT CREATE VIEW TO colegio;
+
+# Permite crear secuencias.
+GRANT CREATE SEQUENCE TO colegio;
+
+# Permite crear procedimientos almacenados.
+GRANT CREATE PROCEDURE TO colegio;
+
+# ============================================================
+# 9. SALIR DE SQL*PLUS Y PROBAR LA CONEXIÓN DEL USUARIO
+# ============================================================
+
+# Sale de la sesión administrativa de SQL*Plus.
+EXIT
+
+# Abre una conexión con el usuario escolar.
+# SQL*Plus solicitará la contraseña configurada anteriormente.
+
+sqlplus colegio@localhost:1521/FREEPDB1
+
+# ============================================================
+# 10. CREAR UNA TABLA DE PRUEBA
+# ============================================================
+#
+# Estos comandos se ejecutan dentro de SQL*Plus, después de
+# conectarse como COLEGIO.
+
+# Crea una tabla sencilla para verificar que el usuario funciona.
+CREATE TABLE prueba_oracle (
+    id NUMBER GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY,
+    mensaje VARCHAR2(100) NOT NULL
+);
+
+# Inserta un registro de prueba.
+INSERT INTO prueba_oracle (mensaje)
+VALUES ('Oracle funciona correctamente en Windows');
+
+# Consulta los registros almacenados.
+SELECT * FROM prueba_oracle;
+
+# Confirma los cambios realizados.
+COMMIT;
+
+# ============================================================
+# 11. COMPROBAR EL PUERTO LOCAL
+# ============================================================
+#
+# Ejecutar en PowerShell, no dentro de SQL*Plus.
+# Comprueba la conexión TCP al puerto 1521 de este equipo.
+
+Test-NetConnection -ComputerName localhost -Port 1521
+
+# ============================================================
+# 12. PERMITIR CONEXIONES DESDE LA RED LOCAL (OPCIONAL)
+# ============================================================
+#
+# Ejecutar en PowerShell como administrador.
+# SOLO si otros equipos deben conectarse a este servidor.
+# La regla limita el acceso al puerto 1521 desde la red local.
+#
+# Antes de abrir el puerto, verifica que el listener esté activo
+# y que la red esté configurada como privada y sea de confianza.
+
+New-NetFirewallRule `
+    -DisplayName "Oracle Database Free - Red local" `
+    -Direction Inbound `
+    -Protocol TCP `
+    -LocalPort 1521 `
+    -RemoteAddress LocalSubnet `
+    -Action Allow `
+    -Profile Private
+
+# Consulta la regla creada.
+Get-NetFirewallRule -DisplayName "Oracle Database Free - Red local"
+
+# ============================================================
+# 13. OBTENER LA DIRECCIÓN IP DEL SERVIDOR
+# ============================================================
+#
+# Ejecutar en PowerShell.
+# Identifica las direcciones IPv4 disponibles en el equipo.
+
+Get-NetIPConfiguration |
+Select-Object InterfaceAlias, @{
+    Name = "IPv4"
+    Expression = { $_.IPv4Address.IPAddress -join ", " }
+}
+
+# ============================================================
+# 14. PROBAR DESDE OTRO EQUIPO WINDOWS
+# ============================================================
+#
+# Sustituye 192.168.1.50 por la IP real del servidor Oracle.
+# Ejecutar en PowerShell desde el equipo cliente.
+
+Test-NetConnection -ComputerName 192.168.1.50 -Port 1521
+
+# ============================================================
+# 15. CONECTAR DESDE ORACLE SQL DEVELOPER
+# ============================================================
+#
+# Crear una conexión nueva con estos datos:
+#
+# Nombre de conexión: COLEGIO
+# Usuario:             colegio
+# Contraseña:          la contraseña definida para COLEGIO
+# Tipo de conexión:    Básica
+# Host:                localhost (en el mismo equipo)
+# Puerto:              1521
+# Tipo de identificador: Nombre del servicio
+# Servicio:            FREEPDB1
+#
+# Si SQL Developer está en otro equipo:
+# Host: dirección IP del servidor Oracle.
+#
+# Pulsar "Probar" y después "Conectar".
+#
+# ============================================================
+# 16. COMANDOS DE MANTENIMIENTO
+# ============================================================
+
+# Consultar los servicios Oracle instalados.
+Get-Service *Oracle*
+
+# Consultar si el puerto 1521 está escuchando.
+Get-NetTCPConnection -LocalPort 1521 -State Listen -ErrorAction SilentlyContinue
+
+# Consultar la información del listener.
+lsnrctl status
+
+# ============================================================
+# FIN DE LA GUÍA
+# ============================================================
