@@ -1,0 +1,322 @@
+*************************************
+PROYECTO PARQUEADERO
+*************************************
+
+
+# Ingresar al usuario administrador de Oracle en Linux
+sudo su - oracle
+
+# Ingresar a Oracle como administrador
+sqlplus / as sysdba
+
+
+
+-- ==========================================================
+-- PROYECTO: SISTEMA DE GESTION DE UN PARQUEADERO
+-- PRIMERA PARTE: CREACION DEL USUARIO
+-- ==========================================================
+
+-- Seleccionar la base de datos conectable
+ALTER SESSION SET CONTAINER = FREEPDB1;
+
+-- Crear el usuario PARQUEADERO con su contraseña
+CREATE USER PARQUEADERO IDENTIFIED BY Parque123;
+
+-- Permitir que el usuario pueda conectarse a Oracle
+GRANT CREATE SESSION TO PARQUEADERO;
+
+-- Permitir que pueda crear tablas
+GRANT CREATE TABLE TO PARQUEADERO;
+
+-- Permitir que pueda crear vistas
+GRANT CREATE VIEW TO PARQUEADERO;
+
+-- Permitir utilizar espacio de almacenamiento
+GRANT UNLIMITED TABLESPACE TO PARQUEADERO;
+
+-- Comprobar que el usuario fue creado
+SELECT USERNAME
+FROM DBA_USERS
+WHERE USERNAME = 'PARQUEADERO';
+
+-- Salir del administrador
+EXIT;
+
+
+# Conectarse a Oracle utilizando el usuario PARQUEADERO
+sqlplus PARQUEADERO/Parque123@localhost:1521/FREEPDB1
+
+
+-- Consultar el usuario conectado
+SELECT USER FROM DUAL;
+
+-- Consultar la base de datos conectable
+SHOW CON_NAME;
+
+**************************************************************
+TABLAS 
+**************************************************************
+
+
+-- ==========================================================
+-- SEGUNDA PARTE: CREACION DE LAS TABLAS
+-- ==========================================================
+
+-- Crear la tabla VEHICULOS
+CREATE TABLE VEHICULOS (
+
+    -- Identificador unico del vehiculo
+    ID_VEHICULO NUMBER PRIMARY KEY,
+
+    -- Placa del vehiculo
+    PLACA VARCHAR2(10) NOT NULL UNIQUE,
+
+    -- Marca del vehiculo
+    MARCA VARCHAR2(30),
+
+    -- Modelo o año del vehiculo
+    MODELO VARCHAR2(30),
+
+    -- Color del vehiculo
+    COLOR VARCHAR2(20)
+);
+
+-- Crear la tabla INGRESOS
+CREATE TABLE INGRESOS (
+
+    -- Identificador unico del ingreso
+    ID_INGRESO NUMBER PRIMARY KEY,
+
+    -- Identificador del vehiculo relacionado
+    ID_VEHICULO NUMBER NOT NULL,
+
+    -- Fecha y hora en que ingreso el vehiculo
+    FECHA_INGRESO TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+
+    -- Fecha y hora en que salio el vehiculo
+    FECHA_SALIDA TIMESTAMP,
+
+    -- Valor pagado por el servicio
+    VALOR_PAGADO NUMBER(10,2),
+
+    -- Crear la clave foranea
+    -- Relaciona INGRESOS con VEHICULOS
+    CONSTRAINT FK_INGRESOS_VEHICULOS
+    FOREIGN KEY (ID_VEHICULO)
+    REFERENCES VEHICULOS(ID_VEHICULO)
+);
+
+-- Comprobar la creacion de las tablas
+SELECT TABLE_NAME
+FROM USER_TABLES;
+
+
+*****************************************************************
+INSERTAR REGISTROS
+*****************************************************************
+
+
+-- ==========================================================
+-- TERCERA PARTE: INSERTAR VEHICULOS
+-- ==========================================================
+
+-- Registrar el primer vehiculo
+INSERT INTO VEHICULOS
+VALUES (1, 'ABC123', 'CHEVROLET', '2020', 'ROJO');
+
+-- Registrar el segundo vehiculo
+INSERT INTO VEHICULOS
+VALUES (2, 'DEF456', 'RENAULT', '2022', 'BLANCO');
+
+-- Registrar el tercer vehiculo
+INSERT INTO VEHICULOS
+VALUES (3, 'GHI789', 'MAZDA', '2021', 'NEGRO');
+
+-- Registrar el cuarto vehiculo
+INSERT INTO VEHICULOS
+VALUES (4, 'JKL321', 'TOYOTA', '2023', 'GRIS');
+
+-- Registrar el quinto vehiculo
+INSERT INTO VEHICULOS
+VALUES (5, 'MNO654', 'KIA', '2019', 'AZUL');
+
+
+-- ==========================================================
+-- CUARTA PARTE: REGISTRAR INGRESOS
+-- ==========================================================
+
+-- Registrar el ingreso del vehiculo 1
+INSERT INTO INGRESOS
+(ID_INGRESO, ID_VEHICULO, FECHA_INGRESO, FECHA_SALIDA, VALOR_PAGADO)
+VALUES (1, 1, TIMESTAMP '2026-11-10 08:00:00',
+        TIMESTAMP '2026-11-10 10:00:00', 5000);
+
+-- Registrar el ingreso del vehiculo 2
+INSERT INTO INGRESOS
+(ID_INGRESO, ID_VEHICULO, FECHA_INGRESO, FECHA_SALIDA, VALOR_PAGADO)
+VALUES (2, 2, TIMESTAMP '2026-11-10 09:00:00',
+        TIMESTAMP '2026-11-10 11:00:00', 5000);
+
+-- Registrar el ingreso del vehiculo 3
+INSERT INTO INGRESOS
+(ID_INGRESO, ID_VEHICULO, FECHA_INGRESO, FECHA_SALIDA, VALOR_PAGADO)
+VALUES (3, 3, TIMESTAMP '2026-11-10 10:00:00',
+        TIMESTAMP '2026-11-10 12:00:00', 6000);
+
+-- Registrar un segundo ingreso del vehiculo 1
+INSERT INTO INGRESOS
+(ID_INGRESO, ID_VEHICULO, FECHA_INGRESO, FECHA_SALIDA, VALOR_PAGADO)
+VALUES (4, 1, TIMESTAMP '2026-11-10 13:00:00',
+        TIMESTAMP '2026-11-10 15:00:00', 5000);
+
+-- Registrar el ingreso del vehiculo 4
+INSERT INTO INGRESOS
+(ID_INGRESO, ID_VEHICULO, FECHA_INGRESO, FECHA_SALIDA, VALOR_PAGADO)
+VALUES (5, 4, TIMESTAMP '2026-11-10 14:00:00',
+        TIMESTAMP '2026-11-10 16:00:00', 7000);
+
+-- Registrar el ingreso del vehiculo 5
+INSERT INTO INGRESOS
+(ID_INGRESO, ID_VEHICULO, FECHA_INGRESO, FECHA_SALIDA, VALOR_PAGADO)
+VALUES (6, 5, TIMESTAMP '2026-11-10 15:00:00',
+        TIMESTAMP '2026-11-10 17:00:00', 4000);
+
+-- Guardar todos los registros
+COMMIT;
+
+
+***********************************************************************
+CONSULTAR INFORMACION 
+***********************************************************************
+
+
+-- Consultar todos los vehiculos
+SELECT * FROM VEHICULOS;
+
+-- Consultar todos los ingresos
+SELECT * FROM INGRESOS;
+
+-- Consultar solamente los vehiculos de color negro
+SELECT *
+FROM VEHICULOS
+WHERE COLOR = 'NEGRO';
+
+-- Consultar los ingresos cuyo valor pagado sea mayor a 5000
+SELECT *
+FROM INGRESOS
+WHERE VALOR_PAGADO > 5000;
+
+-- Consultar la placa y la marca de los vehiculos
+SELECT PLACA, MARCA
+FROM VEHICULOS;
+
+-- Consultar los ingresos junto con la informacion del vehiculo
+SELECT
+    V.PLACA,
+    V.MARCA,
+    I.FECHA_INGRESO,
+    I.FECHA_SALIDA,
+    I.VALOR_PAGADO
+FROM VEHICULOS V
+INNER JOIN INGRESOS I
+ON V.ID_VEHICULO = I.ID_VEHICULO;
+
+
+**********************************************************************
+MODIFICAR INFORMACION
+**********************************************************************
+
+
+-- Cambiar el color del primer vehiculo
+UPDATE VEHICULOS
+SET COLOR = 'BLANCO'
+WHERE ID_VEHICULO = 1;
+
+-- Actualizar la marca del segundo vehiculo
+UPDATE VEHICULOS
+SET MARCA = 'RENAULT SANDERO'
+WHERE ID_VEHICULO = 2;
+
+-- Actualizar el valor pagado de un ingreso
+UPDATE INGRESOS
+SET VALOR_PAGADO = 8000
+WHERE ID_INGRESO = 3;
+
+-- Registrar la salida de un vehiculo que aun esta en el parqueadero
+UPDATE INGRESOS
+SET FECHA_SALIDA = CURRENT_TIMESTAMP,
+    VALOR_PAGADO = 10000
+WHERE ID_INGRESO = 6;
+
+-- Guardar los cambios
+COMMIT;
+
+
+*****************************************************************************
+ELIMINAR INFORMACION
+*****************************************************************************
+
+
+-- Eliminar un registro de ingreso
+-- Se elimina primero el registro relacionado
+DELETE FROM INGRESOS
+WHERE ID_INGRESO = 5;
+
+-- Guardar los cambios
+COMMIT;
+
+-- Intentar eliminar un vehiculo que todavia tiene ingresos
+-- Esta instruccion genera un error de clave foranea
+-- porque existen registros relacionados en INGRESOS.
+
+-- DELETE FROM VEHICULOS
+-- WHERE ID_VEHICULO = 1;
+
+-- Primero eliminar los ingresos relacionados
+DELETE FROM INGRESOS
+WHERE ID_VEHICULO = 1;
+
+-- Ahora si podemos eliminar el vehiculo
+DELETE FROM VEHICULOS
+WHERE ID_VEHICULO = 1;
+
+-- Guardar los cambios
+COMMIT;
+
+
+***************************************************************
+CONSULTAS AVANZADAS
+***************************************************************
+
+
+-- Consultar cuantos ingresos tiene cada vehiculo
+SELECT
+    V.PLACA,
+    V.MARCA,
+    COUNT(I.ID_INGRESO) AS TOTAL_INGRESOS
+FROM VEHICULOS V
+LEFT JOIN INGRESOS I
+ON V.ID_VEHICULO = I.ID_VEHICULO
+GROUP BY V.PLACA, V.MARCA;
+
+-- Calcular el total de dinero recaudado
+SELECT SUM(VALOR_PAGADO) AS TOTAL_RECAUDADO
+FROM INGRESOS;
+
+-- Consultar los vehiculos que todavia estan en el parqueadero
+-- FECHA_SALIDA IS NULL significa que no se ha registrado su salida
+SELECT
+    V.PLACA,
+    V.MARCA,
+    I.FECHA_INGRESO
+FROM VEHICULOS V
+INNER JOIN INGRESOS I
+ON V.ID_VEHICULO = I.ID_VEHICULO
+WHERE I.FECHA_SALIDA IS NULL;
+
+-- Consultar todos los movimientos ordenados por fecha
+SELECT *
+FROM INGRESOS
+ORDER BY FECHA_INGRESO DESC;
+
+

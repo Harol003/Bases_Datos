@@ -1,0 +1,533 @@
+
+-- ==========================================================
+-- PROYECTO: SISTEMA DE GESTION DE UN COLEGIO
+-- PRIMERA PARTE: CREACION DEL USUARIO
+-- ==========================================================
+
+-- PASO 1. INGRESAR COMO ADMINISTRADOR DE ORACLE
+-- Este comando se ejecuta desde la terminal de Linux.
+-- Nos permite ingresar a Oracle con permisos administrativos.
+
+-- sqlplus / as sysdba
+
+
+-- PASO 2. SELECCIONAR LA BASE DE DATOS CONECTABLE
+-- FREEPDB1 es la base de datos conectable que creamos
+-- durante la instalacion de Oracle Database Free.
+-- Aqui vamos a crear nuestro usuario COLEGIO.
+
+ALTER SESSION SET CONTAINER = FREEPDB1;
+
+
+-- PASO 3. CREAR EL USUARIO
+-- CREATE USER permite crear un nuevo usuario en Oracle.
+-- COLEGIO sera el nombre del usuario.
+-- IDENTIFIED BY establece la contraseña de acceso.
+
+CREATE USER COLEGIO IDENTIFIED BY Colegio123;
+
+
+-- PASO 4. ASIGNAR PERMISOS DE CONEXION
+-- CREATE SESSION permite que el usuario pueda conectarse
+-- a la base de datos Oracle.
+
+GRANT CREATE SESSION TO COLEGIO;
+
+
+-- PASO 5. PERMITIR CREAR TABLAS
+-- CREATE TABLE permite que el usuario pueda crear
+-- sus propias tablas dentro de su esquema.
+
+GRANT CREATE TABLE TO COLEGIO;
+
+
+-- PASO 6. PERMITIR CREAR VISTAS
+-- CREATE VIEW permite crear vistas para consultar datos.
+
+GRANT CREATE VIEW TO COLEGIO;
+
+
+-- PASO 7. ASIGNAR ESPACIO DE ALMACENAMIENTO
+-- UNLIMITED TABLESPACE permite utilizar el espacio
+-- disponible del tablespace asignado sin una cuota fija.
+
+GRANT UNLIMITED TABLESPACE TO COLEGIO;
+
+
+-- PASO 8. COMPROBAR QUE EL USUARIO FUE CREADO
+-- Consultar los usuarios registrados en Oracle.
+-- WHERE permite buscar solamente el usuario COLEGIO.
+
+SELECT USERNAME
+FROM DBA_USERS
+WHERE USERNAME = 'COLEGIO';
+
+
+-- PASO 9. SALIR DEL ADMINISTRADOR
+-- EXIT permite cerrar la sesion actual de SQL*Plus.
+
+EXIT;
+
+
+
+***********************************************************************************
+
+
+# Ingresar al usuario oracle de Linux
+sudo su - oracle
+
+# Conectarse a Oracle utilizando el usuario COLEGIO
+# La contraseña es Colegio123
+# FREEPDB1 es el servicio de la base de datos conectable
+
+sqlplus COLEGIO/Colegio123@localhost:1521/FREEPDB1
+
+
+SQL>
+
+-- Consultar el usuario con el que estamos conectados
+SELECT USER FROM DUAL;
+
+-- Consultar el servicio de base de datos actual
+SHOW CON_NAME;
+
+
+USER
+------------------------------
+COLEGIO
+
+CON_NAME
+------------------------------
+FREEPDB1
+
+
+***********************************************************************************
+***********************************************************************************
+
+
+-- ==========================================================
+-- PROYECTO: SISTEMA DE GESTION DE UN COLEGIO
+-- MOTOR DE BASE DE DATOS: ORACLE
+-- USUARIO: COLEGIO
+-- ==========================================================
+
+
+-- ==========================================================
+-- 1. CREACION DE LA TABLA ESTUDIANTES
+-- ==========================================================
+
+-- CREATE TABLE permite crear una nueva tabla.
+-- ESTUDIANTES sera el nombre de nuestra primera tabla.
+
+CREATE TABLE ESTUDIANTES (
+
+    -- ID_ESTUDIANTE almacena el codigo del estudiante.
+    -- NUMBER indica que el campo almacena numeros.
+    -- PRIMARY KEY establece una llave primaria.
+    -- La llave primaria no permite valores repetidos.
+
+    ID_ESTUDIANTE NUMBER PRIMARY KEY,
+
+    -- NOMBRE almacena el nombre del estudiante.
+    -- VARCHAR2(50) permite almacenar hasta 50 caracteres.
+    -- NOT NULL indica que el campo es obligatorio.
+
+    NOMBRE VARCHAR2(50) NOT NULL,
+
+    -- APELLIDO almacena el apellido del estudiante.
+    -- Puede contener hasta 50 caracteres.
+
+    APELLIDO VARCHAR2(50) NOT NULL,
+
+    -- EDAD almacena la edad del estudiante.
+    -- NUMBER permite almacenar valores numericos.
+
+    EDAD NUMBER,
+
+    -- CORREO almacena el correo electronico.
+    -- Puede contener hasta 100 caracteres.
+
+    CORREO VARCHAR2(100)
+
+);
+
+
+-- ==========================================================
+-- 2. CREACION DE LA TABLA ASIGNATURAS
+-- ==========================================================
+
+-- Esta tabla almacena las asignaturas del colegio.
+-- Cada asignatura del ejemplo esta asociada a un estudiante.
+
+CREATE TABLE ASIGNATURAS (
+
+    -- ID_ASIGNATURA identifica cada registro.
+    -- PRIMARY KEY evita que se repita el identificador.
+
+    ID_ASIGNATURA NUMBER PRIMARY KEY,
+
+    -- NOMBRE_ASIGNATURA almacena el nombre de la materia.
+    -- VARCHAR2(60) permite almacenar hasta 60 caracteres.
+
+    NOMBRE_ASIGNATURA VARCHAR2(60) NOT NULL,
+
+    -- DOCENTE almacena el nombre del profesor encargado.
+
+    DOCENTE VARCHAR2(100),
+
+    -- INTENSIDAD_HORARIA almacena las horas semanales
+    -- correspondientes a la asignatura.
+
+    INTENSIDAD_HORARIA NUMBER,
+
+    -- ID_ESTUDIANTE almacena el codigo del estudiante.
+    -- Este campo permitira relacionar las dos tablas.
+
+    ID_ESTUDIANTE NUMBER,
+
+    -- CONSTRAINT permite asignar un nombre a una restriccion.
+    -- FK_ASIGNATURAS_ESTUDIANTES es el nombre de la llave foranea.
+    -- FOREIGN KEY establece la relacion entre las tablas.
+    -- REFERENCES indica de que tabla proviene la relacion.
+    -- ESTUDIANTES(ID_ESTUDIANTE) referencia la llave primaria.
+
+    CONSTRAINT FK_ASIGNATURAS_ESTUDIANTES
+    FOREIGN KEY (ID_ESTUDIANTE)
+    REFERENCES ESTUDIANTES(ID_ESTUDIANTE)
+
+);
+
+
+-- ==========================================================
+-- 3. INSERTAR ESTUDIANTES
+-- ==========================================================
+
+-- INSERT INTO permite agregar nuevos registros a una tabla.
+-- VALUES contiene los valores que se guardaran.
+-- Los valores deben respetar el orden de los campos.
+
+INSERT INTO ESTUDIANTES
+VALUES (1, 'Carlos', 'Perez', 15, 'carlos@gmail.com');
+
+-- Registrar el segundo estudiante.
+
+INSERT INTO ESTUDIANTES
+VALUES (2, 'Maria', 'Gomez', 14, 'maria@gmail.com');
+
+-- Registrar el tercer estudiante.
+
+INSERT INTO ESTUDIANTES
+VALUES (3, 'Andres', 'Rodriguez', 16, 'andres@gmail.com');
+
+-- Registrar el cuarto estudiante.
+
+INSERT INTO ESTUDIANTES
+VALUES (4, 'Laura', 'Martinez', 15, 'laura@gmail.com');
+
+-- Registrar el quinto estudiante.
+
+INSERT INTO ESTUDIANTES
+VALUES (5, 'Daniel', 'Lopez', 17, 'daniel@gmail.com');
+
+-- COMMIT permite guardar definitivamente los registros.
+
+COMMIT;
+
+
+-- ==========================================================
+-- 4. INSERTAR ASIGNATURAS
+-- ==========================================================
+
+-- Registrar la asignatura Matematicas para Carlos.
+-- El numero 1 corresponde al ID del estudiante Carlos.
+
+INSERT INTO ASIGNATURAS
+VALUES (101, 'Matematicas', 'Pedro Ramirez', 5, 1);
+
+-- Registrar Informatica para Carlos.
+
+INSERT INTO ASIGNATURAS
+VALUES (102, 'Informatica', 'Ana Torres', 3, 1);
+
+-- Registrar Ciencias Naturales para Maria.
+-- El numero 2 corresponde al ID de Maria.
+
+INSERT INTO ASIGNATURAS
+VALUES (103, 'Ciencias Naturales', 'Luis Castro', 4, 2);
+
+-- Registrar Sociales para Maria.
+
+INSERT INTO ASIGNATURAS
+VALUES (104, 'Sociales', 'Marta Diaz', 3, 2);
+
+-- Registrar Ingles para Andres.
+-- El numero 3 corresponde al ID de Andres.
+
+INSERT INTO ASIGNATURAS
+VALUES (105, 'Ingles', 'Carlos Rojas', 4, 3);
+
+-- Registrar Educacion Fisica para Laura.
+
+INSERT INTO ASIGNATURAS
+VALUES (106, 'Educacion Fisica', 'Jorge Perez', 2, 4);
+
+-- Guardar todos los registros insertados.
+
+COMMIT;
+
+
+-- ==========================================================
+-- 5. CONSULTAR TODOS LOS ESTUDIANTES
+-- ==========================================================
+
+-- SELECT permite consultar informacion de una tabla.
+-- El asterisco (*) significa que queremos ver todos los campos.
+-- FROM indica de que tabla queremos obtener la informacion.
+
+SELECT * FROM ESTUDIANTES;
+
+
+-- ==========================================================
+-- 6. CONSULTAR TODAS LAS ASIGNATURAS
+-- ==========================================================
+
+-- Consultar todos los registros de la tabla ASIGNATURAS.
+
+SELECT * FROM ASIGNATURAS;
+
+
+-- ==========================================================
+-- 7. CONSULTAR UN ESTUDIANTE ESPECIFICO
+-- ==========================================================
+
+-- WHERE permite establecer una condicion.
+-- En este caso buscamos el estudiante con ID igual a 1.
+
+SELECT *
+FROM ESTUDIANTES
+WHERE ID_ESTUDIANTE = 1;
+
+
+-- ==========================================================
+-- 8. CONSULTAR ESTUDIANTES MAYORES DE 15 ANOS
+-- ==========================================================
+
+-- El operador > significa MAYOR QUE.
+-- Esta consulta muestra solamente los estudiantes
+-- cuya edad sea superior a 15 anos.
+
+SELECT *
+FROM ESTUDIANTES
+WHERE EDAD > 15;
+
+
+-- ==========================================================
+-- 9. CONSULTAR ASIGNATURAS DE UN ESTUDIANTE
+-- ==========================================================
+
+-- Consultar las asignaturas relacionadas con el estudiante 1.
+-- WHERE filtra los registros utilizando su identificador.
+
+SELECT *
+FROM ASIGNATURAS
+WHERE ID_ESTUDIANTE = 1;
+
+
+-- ==========================================================
+-- 10. CONSULTAR ESTUDIANTES Y SUS ASIGNATURAS
+-- ==========================================================
+
+-- INNER JOIN permite relacionar informacion de dos tablas.
+-- E es un alias para la tabla ESTUDIANTES.
+-- A es un alias para la tabla ASIGNATURAS.
+-- ON establece la condicion para relacionar ambas tablas.
+-- Los identificadores deben coincidir.
+
+SELECT
+    E.ID_ESTUDIANTE,
+    E.NOMBRE,
+    E.APELLIDO,
+    A.NOMBRE_ASIGNATURA,
+    A.DOCENTE,
+    A.INTENSIDAD_HORARIA
+
+FROM ESTUDIANTES E
+
+INNER JOIN ASIGNATURAS A
+
+ON E.ID_ESTUDIANTE = A.ID_ESTUDIANTE;
+
+
+-- ==========================================================
+-- 11. MODIFICAR EL CORREO DE UN ESTUDIANTE
+-- ==========================================================
+
+-- UPDATE permite modificar registros existentes.
+-- SET indica el campo que vamos a modificar.
+-- WHERE identifica el registro que queremos cambiar.
+-- Es importante utilizar WHERE para evitar modificar
+-- todos los estudiantes.
+
+UPDATE ESTUDIANTES
+
+SET CORREO = 'carlos.perez@colegio.edu.co'
+
+WHERE ID_ESTUDIANTE = 1;
+
+-- Guardar la modificacion realizada.
+
+COMMIT;
+
+
+-- ==========================================================
+-- 12. MODIFICAR LA EDAD DE UN ESTUDIANTE
+-- ==========================================================
+
+-- Cambiar la edad del estudiante con ID 2.
+
+UPDATE ESTUDIANTES
+
+SET EDAD = 15
+
+WHERE ID_ESTUDIANTE = 2;
+
+-- Guardar el cambio.
+
+COMMIT;
+
+
+-- ==========================================================
+-- 13. MODIFICAR EL NOMBRE DE UNA ASIGNATURA
+-- ==========================================================
+
+-- Cambiar el nombre de la asignatura con ID 101.
+
+UPDATE ASIGNATURAS
+
+SET NOMBRE_ASIGNATURA = 'Matematicas Avanzadas'
+
+WHERE ID_ASIGNATURA = 101;
+
+-- Guardar el cambio.
+
+COMMIT;
+
+
+-- ==========================================================
+-- 14. MODIFICAR EL DOCENTE DE UNA ASIGNATURA
+-- ==========================================================
+
+-- Cambiar el nombre del docente de Informatica.
+
+UPDATE ASIGNATURAS
+
+SET DOCENTE = 'Andres Martinez'
+
+WHERE ID_ASIGNATURA = 102;
+
+-- Guardar la modificacion.
+
+COMMIT;
+
+
+-- ==========================================================
+-- 15. ELIMINAR UNA ASIGNATURA
+-- ==========================================================
+
+-- DELETE permite eliminar registros de una tabla.
+-- WHERE indica cual es el registro que queremos eliminar.
+-- En este caso eliminaremos la asignatura con ID 106.
+
+DELETE FROM ASIGNATURAS
+
+WHERE ID_ASIGNATURA = 106;
+
+-- Guardar la eliminacion.
+
+COMMIT;
+
+
+-- ==========================================================
+-- 16. CONTAR LAS ASIGNATURAS DE CADA ESTUDIANTE
+-- ==========================================================
+
+-- COUNT permite contar registros.
+-- LEFT JOIN muestra todos los estudiantes,
+-- incluso aquellos que no tengan asignaturas relacionadas.
+-- GROUP BY agrupa los resultados por estudiante.
+
+SELECT
+    E.NOMBRE,
+    E.APELLIDO,
+    COUNT(A.ID_ASIGNATURA) AS TOTAL_ASIGNATURAS
+
+FROM ESTUDIANTES E
+
+LEFT JOIN ASIGNATURAS A
+
+ON E.ID_ESTUDIANTE = A.ID_ESTUDIANTE
+
+GROUP BY E.ID_ESTUDIANTE, E.NOMBRE, E.APELLIDO;
+
+
+-- ==========================================================
+-- 17. ELIMINAR UN ESTUDIANTE
+-- ==========================================================
+
+-- Intentar eliminar al estudiante con ID 1.
+-- Este estudiante tiene asignaturas relacionadas.
+-- Oracle impedira la eliminacion por la llave foranea.
+-- Se producira un error de integridad referencial.
+
+DELETE FROM ESTUDIANTES
+WHERE ID_ESTUDIANTE = 1;
+
+-- Para eliminar correctamente al estudiante primero
+-- debemos eliminar las asignaturas relacionadas.
+
+DELETE FROM ASIGNATURAS
+WHERE ID_ESTUDIANTE = 1;
+
+-- Ahora podemos eliminar al estudiante.
+
+DELETE FROM ESTUDIANTES
+WHERE ID_ESTUDIANTE = 1;
+
+-- Guardar las eliminaciones.
+
+COMMIT;
+
+
+-- ==========================================================
+-- 18. CONSULTA FINAL DE LA BASE DE DATOS
+-- ==========================================================
+
+-- Mostrar los estudiantes y sus asignaturas.
+-- LEFT JOIN permite mostrar tambien estudiantes
+-- que no tengan asignaturas relacionadas.
+
+SELECT
+    E.ID_ESTUDIANTE,
+    E.NOMBRE,
+    E.APELLIDO,
+    E.EDAD,
+    E.CORREO,
+    A.NOMBRE_ASIGNATURA,
+    A.DOCENTE,
+    A.INTENSIDAD_HORARIA
+
+FROM ESTUDIANTES E
+
+LEFT JOIN ASIGNATURAS A
+
+ON E.ID_ESTUDIANTE = A.ID_ESTUDIANTE
+
+ORDER BY E.ID_ESTUDIANTE;
+
+-- ORDER BY permite ordenar los resultados.
+-- ASC significa ascendente y DESC significa descendente.
+
+
+-- ==========================================================
+-- FIN DEL EJERCICIO
+-- ==========================================================

@@ -1,0 +1,248 @@
+**************************************
+script Administrativo
+**************************************
+
+---- Ingresar con usuario Oracle
+
+sudo su - Oracle
+sqlplus / as sysdba
+ALTER SESSION SET CONTAINER = FREEPDB1;
+
+---- Creación de usuario en Oracle
+
+---- Crear un usuario llamado TIENDA
+CREATE USER TIENDA IDENTIFIED BY Tienda123;
+
+---- Asignar permisos para conectarse a Oracle
+GRANT CREATE SESSION TO TIENDA;
+
+---- Permitir crear tablas
+GRANT CREATE TABLE TO TIENDA;
+
+---- Asignar espacio ilimitado dentro del tablespace USERS
+GRANT UNLIMITED TABLESPACE TO TIENDA;
+
+**************************************
+script Tienda
+**************************************
+
+sqlplus TIENDA/Tienda123@localhost:1521/FREEPDB1
+
+
+-- =====================================================
+-- BASE DE DATOS: TIENDA DE BICICLETAS
+-- MOTOR: ORACLE DATABASE
+-- =====================================================
+
+-- =====================================================
+-- TABLA 1: CLIENTES
+-- Almacena la informacion de los clientes
+-- =====================================================
+
+CREATE TABLE CLIENTES (
+
+    -- Identificador unico del cliente
+    ID_CLIENTE NUMBER PRIMARY KEY,
+
+    -- Nombre del cliente
+    NOMBRE VARCHAR2(50) NOT NULL,
+
+    -- Apellido del cliente
+    APELLIDO VARCHAR2(50) NOT NULL,
+
+    -- Numero telefonico
+    TELEFONO VARCHAR2(20),
+
+    -- Correo electronico
+    CORREO VARCHAR2(100)
+
+);
+
+-- =====================================================
+-- TABLA 2: BICICLETAS
+-- Almacena las bicicletas asociadas a cada cliente
+-- =====================================================
+
+CREATE TABLE BICICLETAS (
+
+    -- Identificador unico de la bicicleta
+    ID_BICICLETA NUMBER PRIMARY KEY,
+
+    -- Marca de la bicicleta
+    MARCA VARCHAR2(50) NOT NULL,
+
+    -- Modelo de la bicicleta
+    MODELO VARCHAR2(50) NOT NULL,
+
+    -- Precio de la bicicleta
+    PRECIO NUMBER(10,2) NOT NULL,
+
+    -- Identificador del cliente propietario
+    ID_CLIENTE NUMBER,
+
+    -- Llave foranea que relaciona las dos tablas
+    CONSTRAINT FK_BICICLETAS_CLIENTES
+    FOREIGN KEY (ID_CLIENTE)
+    REFERENCES CLIENTES(ID_CLIENTE)
+
+);
+
+-- =====================================================
+-- 3. INSERTAR CLIENTES
+-- =====================================================
+
+INSERT INTO CLIENTES
+VALUES (1, 'Carlos', 'Perez', '3001234567', 'carlos@gmail.com');
+
+INSERT INTO CLIENTES
+VALUES (2, 'Maria', 'Gomez', '3109876543', 'maria@gmail.com');
+
+INSERT INTO CLIENTES
+VALUES (3, 'Andres', 'Rodriguez', '3204567890', 'andres@gmail.com');
+
+-- Guardar los registros
+COMMIT;
+
+-- =====================================================
+-- 4. INSERTAR BICICLETAS
+-- =====================================================
+
+INSERT INTO BICICLETAS
+VALUES (101, 'GW', 'Lynx', 1500000, 1);
+
+INSERT INTO BICICLETAS
+VALUES (102, 'Trek', 'Marlin 5', 2800000, 2);
+
+INSERT INTO BICICLETAS
+VALUES (103, 'Specialized', 'Rockhopper', 3500000, 1);
+
+INSERT INTO BICICLETAS
+VALUES (104, 'Giant', 'Talon', 2200000, 3);
+
+-- Guardar los registros
+COMMIT;
+
+-- =====================================================
+-- 5. CONSULTAR TODOS LOS CLIENTES
+-- =====================================================
+
+SELECT * FROM CLIENTES;
+
+-- =====================================================
+-- 6. CONSULTAR TODAS LAS BICICLETAS
+-- =====================================================
+
+SELECT * FROM BICICLETAS;
+
+-- =====================================================
+-- 7. CONSULTAR CLIENTES Y SUS BICICLETAS
+-- Utilizamos INNER JOIN para relacionar las tablas
+-- =====================================================
+
+SELECT
+    CLIENTES.ID_CLIENTE,
+    CLIENTES.NOMBRE,
+    CLIENTES.APELLIDO,
+    BICICLETAS.MARCA,
+    BICICLETAS.MODELO,
+    BICICLETAS.PRECIO
+
+FROM CLIENTES
+
+INNER JOIN BICICLETAS
+ON CLIENTES.ID_CLIENTE = BICICLETAS.ID_CLIENTE;
+
+-- =====================================================
+-- 8. CONSULTAR BICICLETAS DE UN CLIENTE ESPECIFICO
+-- =====================================================
+
+SELECT *
+FROM BICICLETAS
+WHERE ID_CLIENTE = 1;
+
+-- =====================================================
+-- 9. MODIFICAR UN CLIENTE
+-- Cambiar el telefono del cliente numero 1
+-- =====================================================
+
+UPDATE CLIENTES
+SET TELEFONO = '3155555555'
+WHERE ID_CLIENTE = 1;
+
+-- Guardar el cambio
+COMMIT;
+
+-- =====================================================
+-- 10. MODIFICAR EL PRECIO DE UNA BICICLETA
+-- =====================================================
+
+UPDATE BICICLETAS
+SET PRECIO = 1800000
+WHERE ID_BICICLETA = 101;
+
+-- Guardar el cambio
+COMMIT;
+
+-- =====================================================
+-- 11. ELIMINAR UNA BICICLETA
+-- =====================================================
+
+DELETE FROM BICICLETAS
+WHERE ID_BICICLETA = 104;
+
+-- Guardar la eliminacion
+COMMIT;
+
+-- =====================================================
+-- 12. ELIMINAR UN CLIENTE
+-- Solo se puede eliminar si no tiene bicicletas asociadas
+-- =====================================================
+
+DELETE FROM CLIENTES
+WHERE ID_CLIENTE = 3;
+
+-- Guardar la eliminacion
+COMMIT;
+
+-- =====================================================
+-- 13. CONSULTA FINAL
+-- Mostrar clientes y bicicletas existentes
+-- =====================================================
+
+SELECT
+    C.NOMBRE,
+    C.APELLIDO,
+    B.MARCA,
+    B.MODELO,
+    B.PRECIO
+
+FROM CLIENTES C
+
+INNER JOIN BICICLETAS B
+ON C.ID_CLIENTE = B.ID_CLIENTE;
+
+-- =====================================================
+-- FIN DEL EJERCICIO
+-- =====================================================
+
+
+----- Select 
+
+SELECT * FROM BICICLETAS WHERE PRECIO > 2000000;
+SELECT * FROM BICICLETAS ORDER BY PRECIO DESC;
+
+* Bicicletas por cliente
+
+SELECT    C.NOMBRE,
+    C.APELLIDO,
+    COUNT(B.ID_BICICLETA) AS TOTAL_BICICLETAS
+FROM CLIENTES C
+LEFT JOIN BICICLETAS B
+ON C.ID_CLIENTE = B.ID_CLIENTE
+GROUP BY C.NOMBRE, C.APELLIDO;
+
+* Valor total de bicicletas
+
+SELECT SUM(PRECIO) AS VALOR_TOTAL
+FROM BICICLETAS;
+
