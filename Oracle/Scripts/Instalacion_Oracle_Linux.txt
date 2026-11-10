@@ -1,0 +1,166 @@
+***************************************
+ORACLE LINUX
+***************************************
+
+Download
+
+https://yum.oracle.com/oracle-linux-isos.html
+
+***************************************
+INSTALACION
+***************************************
+
+------ Actualización
+
+sudo dnf update -y
+sudo dnf install -y wget curl unzip nano net-tools
+sudo reboot
+
+------ Pre Requisitos de Oracle
+
+sudo dnf install -y oracle-ai-database-preinstall-26ai
+
+
+------ Validar que exista el usuario de Oracle
+
+id Oracle
+
+------ Validar Espacio Disponible
+
+df -h /opt
+
+------ Recursos
+
+cat /etc/oracle-release
+uname -m
+free -h
+df -h
+nproc
+
+------ Requisitos Oracle
+
+sudo dnf install -y oracle-ai-database-preinstall-26ai
+
+
+------ Descargar Oracle
+
+sudo mkdir -p /opt/oracle/install
+sudo chown oracle:oinstall /opt/oracle/install
+
+
+cd /opt/oracle/install
+
+sudo mkdir -p /opt/oracle/install
+sudo chown oracle:oinstall /opt/oracle/install
+
+cd /opt/oracle/install
+
+sudo wget -c \
+"https://download.oracle.com/otn-pub/otn_software/db-free/oracle-ai-database-free-26ai-23.26.3-1.el9.x86_64.rpm" \
+-O oracle-ai-database-free-26ai-23.26.3-1.el9.x86_64.rpm
+
+------ Validar Integridad del Archivo
+
+sudo sha256sum /opt/oracle/install/oracle-ai-database-free-26ai-23.26.3-1.el9.x86_64.rpm
+
+------ Validar conectividad 
+
+curl -I https://www.oracle.com/database/free/get-started/
+
+------ Instalar Oracle
+
+sudo dnf install -y /opt/oracle/install/oracle-ai-database-free-26ai-23.26.3-1.el9.x86_64.rpm
+
+------- Validar que esta Instalado
+
+rpm -qa | grep oracle-ai-database-free
+
+------- Configurar la Base de datos
+
+sudo /etc/init.d/oracle-free-26ai configure
+
+------- Validar Estado del Servidor
+
+sudo /etc/init.d/oracle-free-26ai status
+
+------- Inicializar Oracle
+
+sudo /etc/init.d/oracle-free-26ai start
+
+------- Reiniciar Servicios Oracle
+
+sudo /etc/init.d/oracle-free-26ai restart
+
+------- Configuración de Variables
+
+sudo su - Oracle
+
+export ORACLE_BASE=/opt/oracle
+export ORACLE_HOME=/opt/oracle/product/26ai/dbhomeFree
+export ORACLE_SID=FREE
+export PATH=$ORACLE_HOME/bin:$PATH
+
+
+------ Guardar Variables Permamentes
+
+cat >> ~/.bash_profile <<'EOF'
+export ORACLE_BASE=/opt/oracle
+export ORACLE_HOME=/opt/oracle/product/26ai/dbhomeFree
+export ORACLE_SID=FREE
+export PATH=$ORACLE_HOME/bin:$PATH
+EOF
+
+------- Cargar Variables
+
+source ~/.bash_profile
+
+------- Ingresar a Oracle (Validar Estado)
+
+sqlplus / as sysdba
+SELECT name, open_mode FROM v$database;
+SHOW PDBS;
+SELECT instance_name, status FROM v$instance;
+
+ALTER PLUGGABLE DATABASE FREEPDB1 OPEN;
+ALTER PLUGGABLE DATABASE FREEPDB1 SAVE STATE;
+EXIT;
+
+------ Validar Listener
+
+lsnrctl status
+
+------- Conectarse a la BD
+
+sqlplus system@localhost:1521/FREEPDB1
+
+************************************************
+TABLA DE PRUEBA
+************************************************
+
+CREATE TABLE estudiantes (
+    id NUMBER PRIMARY KEY,
+    nombre VARCHAR2(100),
+    edad NUMBER,
+    correo VARCHAR2(150)
+);
+
+INSERT INTO estudiantes
+VALUES (1, 'Carlos', 18, 'carlos@gmail.com');
+
+INSERT INTO estudiantes
+VALUES (2, 'Maria', 19, 'maria@gmail.com');
+
+COMMIT;
+
+SELECT * FROM estudiantes;
+
+
+
+
+
+
+
+
+
+
+

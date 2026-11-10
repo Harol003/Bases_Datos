@@ -1,0 +1,200 @@
+
+# ============================================================
+# INSTALACION ORACLE AI DATABASE 26ai FREE
+# SISTEMA OPERATIVO: ORACLE LINUX 9
+# ARQUITECTURA: x86_64
+# INSTALACION NATIVA SIN DOCKER
+# ============================================================
+
+# ------------------------------------------------------------
+# 1. ACTUALIZAR EL SISTEMA OPERATIVO
+# ------------------------------------------------------------
+
+sudo dnf update -y
+
+# ------------------------------------------------------------
+# 2. VERIFICAR SISTEMA OPERATIVO Y ARQUITECTURA
+# ------------------------------------------------------------
+
+cat /etc/os-release
+uname -m
+rpm -E %rhel
+
+# ------------------------------------------------------------
+# 3. VERIFICAR ESPACIO DISPONIBLE
+# ------------------------------------------------------------
+
+df -h /opt
+
+# ------------------------------------------------------------
+# 4. INSTALAR HERRAMIENTAS BASICAS
+# ------------------------------------------------------------
+
+sudo dnf install -y wget curl unzip zip nano vim firewalld sysstat net-tools
+
+# ------------------------------------------------------------
+# 5. INSTALAR PREREQUISITOS DE ORACLE
+# ESTE PAQUETE CREA AUTOMATICAMENTE:
+# - USUARIO ORACLE
+# - GRUPO OINSTALL
+# - GRUPO DBA
+# - GRUPO OPER
+# - CONFIGURACIONES DEL KERNEL
+# ------------------------------------------------------------
+
+sudo dnf install -y oracle-ai-database-preinstall-26ai
+
+# ------------------------------------------------------------
+# 6. VERIFICAR QUE EL USUARIO ORACLE EXISTA
+# ------------------------------------------------------------
+
+id oracle
+
+# ------------------------------------------------------------
+# 7. VERIFICAR LOS GRUPOS DE ORACLE
+# ------------------------------------------------------------
+
+getent group oinstall
+getent group dba
+getent group oper
+
+# ------------------------------------------------------------
+# 8. VERIFICAR ARQUITECTURA DEL SERVIDOR
+# ------------------------------------------------------------
+
+uname -m
+
+# DEBE MOSTRAR: x86_64
+
+# ------------------------------------------------------------
+# 9. VERIFICAR QUE EL RPM ESTE DESCARGADO
+# EL ARCHIVO DEBE ESTAR EN /tmp
+# ------------------------------------------------------------
+
+ls -lh /tmp/oracle-ai-database-free-26ai-*.el9.x86_64.rpm
+
+# ------------------------------------------------------------
+# 10. INSTALAR ORACLE DATABASE 26ai FREE
+# ------------------------------------------------------------
+
+sudo dnf install -y /tmp/oracle-ai-database-free-26ai-*.el9.x86_64.rpm
+
+# ------------------------------------------------------------
+# 11. CONFIGURAR LA BASE DE DATOS
+# DURANTE ESTE PROCESO SE SOLICITARA UNA CONTRASEÑA
+# PARA LAS CUENTAS ADMINISTRATIVAS
+# ------------------------------------------------------------
+
+sudo /etc/init.d/oracle-free-26ai configure
+
+# ------------------------------------------------------------
+# 12. HABILITAR INICIO AUTOMATICO
+# ------------------------------------------------------------
+
+sudo systemctl daemon-reload
+sudo systemctl enable oracle-free-26ai
+
+# ------------------------------------------------------------
+# 13. INICIAR ORACLE DATABASE
+# ------------------------------------------------------------
+
+sudo systemctl start oracle-free-26ai
+
+# ------------------------------------------------------------
+# 14. VERIFICAR ESTADO DEL SERVICIO
+# ------------------------------------------------------------
+
+sudo systemctl status oracle-free-26ai --no-pager
+
+# ------------------------------------------------------------
+# 15. CONFIGURAR VARIABLES DE ENTORNO
+# DEL USUARIO ORACLE
+# ------------------------------------------------------------
+
+sudo -u oracle bash -c 'cat >> /home/oracle/.bash_profile <<EOF
+
+# VARIABLES ORACLE DATABASE 26ai FREE
+export ORACLE_BASE=/opt/oracle
+export ORACLE_HOME=/opt/oracle/product/26ai/dbhomeFree
+export ORACLE_SID=FREE
+export PATH=\$ORACLE_HOME/bin:\$PATH
+export LD_LIBRARY_PATH=\$ORACLE_HOME/lib
+
+EOF'
+
+# ------------------------------------------------------------
+# 16. ASIGNAR PROPIEDAD DEL PERFIL
+# ------------------------------------------------------------
+
+sudo chown oracle:oinstall /home/oracle/.bash_profile
+
+# ------------------------------------------------------------
+# 17. VERIFICAR VARIABLES DE ENTORNO
+# ------------------------------------------------------------
+
+sudo -iu oracle bash -c '
+source ~/.bash_profile
+echo "ORACLE_BASE=$ORACLE_BASE"
+echo "ORACLE_HOME=$ORACLE_HOME"
+echo "ORACLE_SID=$ORACLE_SID"
+'
+
+# ------------------------------------------------------------
+# 18. VERIFICAR BASE DE DATOS
+# ------------------------------------------------------------
+
+sudo -iu oracle bash -c '
+source ~/.bash_profile
+
+sqlplus -s / as sysdba <<EOF
+SELECT name FROM v\$database;
+SELECT instance_name, status FROM v\$instance;
+SHOW PDBS;
+EXIT;
+EOF
+'
+
+# ------------------------------------------------------------
+# 19. VERIFICAR LISTENER
+# ------------------------------------------------------------
+
+sudo -iu oracle bash -c '
+source ~/.bash_profile
+lsnrctl status
+'
+
+# ------------------------------------------------------------
+# 20. HABILITAR FIREWALL
+# ------------------------------------------------------------
+
+sudo systemctl enable --now firewalld
+
+# ------------------------------------------------------------
+# 21. PERMITIR CONEXIONES AL PUERTO ORACLE
+# ------------------------------------------------------------
+
+sudo firewall-cmd --permanent --add-port=1521/tcp
+sudo firewall-cmd --reload
+
+# ------------------------------------------------------------
+# 22. MOSTRAR DIRECCION IP DEL SERVIDOR
+# ------------------------------------------------------------
+
+hostname -I
+
+# ------------------------------------------------------------
+# 23. MOSTRAR INFORMACION FINAL
+# ------------------------------------------------------------
+
+echo "=============================================="
+echo " ORACLE DATABASE 26ai FREE"
+echo "=============================================="
+echo "ORACLE_BASE: /opt/oracle"
+echo "ORACLE_HOME: /opt/oracle/product/26ai/dbhomeFree"
+echo "ORACLE_SID: FREE"
+echo "SERVICIO: FREEPDB1"
+echo "PUERTO: 1521"
+echo "USUARIO: SYSTEM"
+echo "=============================================="
+echo "INSTALACION Y VERIFICACIONES FINALIZADAS"
+echo "=============================================="
